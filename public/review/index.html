@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lamna en recension</title>
+  <title>Lämna en recension</title>
   <link rel="stylesheet" href="/shared/theme.css" />
   <link rel="stylesheet" href="/review/style.css" />
 </head>
@@ -15,7 +15,7 @@
 
     <div id="not-found" class="card center hidden">
       <h2>Restaurangen hittades inte</h2>
-      <p class="muted">Kontrollera lanken eller fraga personalen om hjalp.</p>
+      <p class="muted">Kontrollera länken eller fråga personalen om hjälp.</p>
     </div>
 
     <div id="review-form" class="card hidden">
@@ -32,11 +32,11 @@
 
       <div class="field">
         <label for="comment">Kommentar (valfritt)</label>
-        <textarea id="comment" rows="4" placeholder="Beratta gama mer..."></textarea>
+        <textarea id="comment" rows="4" placeholder="Berätta gärna mer..."></textarea>
       </div>
 
       <div class="honeypot-field" aria-hidden="true">
-        <label for="website">Lamna detta falt tomt</label>
+        <label for="website">Lämna detta fält tomt</label>
         <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
       </div>
 
@@ -46,17 +46,22 @@
     </div>
 
     <div id="result-high" class="card hidden">
-      <h2>Tack for ditt fina betyg!</h2>
-      <p>Vi vore valdigt tacksamma om du ville dela din upplevelse pa Google.</p>
-      <p class="muted">Som tack far du en rabattkod:</p>
-      <div class="discount-code" id="discount-code"></div>
-      <p class="muted" id="discount-valid"></p>
-      <a href="#" id="google-link" class="button" target="_blank" rel="noopener">Lamna recension pa Google</a>
+      <h2>Tack för ditt fina betyg!</h2>
+      <p>Dela gärna din upplevelse på Google - visa sedan upp den här skärmen i kassan så får du din rabatt.</p>
+
+      <a href="#" id="google-link" class="button" target="_blank" rel="noopener">Dela recension på Google</a>
+
+      <div class="discount-code" id="discount-box">
+        <div class="discount-percent" id="discount-percent"></div>
+        <div class="muted">Visa upp för personalen i kassan</div>
+        <div class="discount-fine-print" id="discount-code"></div>
+        <div class="muted" id="discount-valid"></div>
+      </div>
     </div>
 
     <div id="result-thanks" class="card hidden center">
-      <h2>Tack for din feedback!</h2>
-      <p class="muted" id="thanks-message">Den gar direkt till restaurangen sa vi kan bli battre.</p>
+      <h2>Tack för din feedback!</h2>
+      <p class="muted" id="thanks-message">Den går direkt till restaurangen så vi kan bli bättre.</p>
     </div>
   </div>
 

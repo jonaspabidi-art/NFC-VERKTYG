@@ -37,7 +37,7 @@
         localStorage.setItem(NAME_KEY, data.restaurantName);
         window.location.href = "/admin/dashboard.html";
       } catch (err) {
-        loginError.textContent = "Kunde inte na servern, forsok igen.";
+        loginError.textContent = "Kunde inte nå servern, försök igen.";
         loginError.classList.remove("hidden");
         loginBtn.disabled = false;
       }
@@ -93,7 +93,7 @@
         const row = document.createElement("div");
         row.className = "bar-row";
         row.innerHTML = `
-          <span class="bar-label">${rating} stjarnor</span>
+          <span class="bar-label">${rating} stjärnor</span>
           <span class="bar-track"><span class="bar-fill" style="width:${(count / max) * 100}%"></span></span>
           <span class="bar-count">${count}</span>
         `;
@@ -157,7 +157,7 @@
         });
         const data = await res.json();
 
-        messageEl.textContent = res.ok ? "Rabattkoden ar inlost." : data.error || "Kunde inte losa in koden.";
+        messageEl.textContent = res.ok ? "Rabattkoden är inlöst." : data.error || "Kunde inte lösa in koden.";
         messageEl.classList.remove("hidden");
 
         if (res.ok) {
@@ -165,7 +165,7 @@
           loadStats();
         }
       } catch (err) {
-        messageEl.textContent = "Kunde inte na servern, forsok igen.";
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
         messageEl.classList.remove("hidden");
       }
     });

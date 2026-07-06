@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/login", loginLimiter, async (req, res) => {
   const { slug, password } = req.body || {};
   if (!slug || !password) {
-    return res.status(400).json({ error: "Ange restaurang och losenord." });
+    return res.status(400).json({ error: "Ange restaurang och lösenord." });
   }
 
   const { data: restaurant, error } = await supabase
@@ -21,15 +21,15 @@ router.post("/login", loginLimiter, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Nagot gick fel, forsok igen." });
+    return res.status(500).json({ error: "Något gick fel, försök igen." });
   }
   if (!restaurant) {
-    return res.status(401).json({ error: "Fel restaurang eller losenord." });
+    return res.status(401).json({ error: "Fel restaurang eller lösenord." });
   }
 
   const passwordMatches = await bcrypt.compare(password, restaurant.password_hash);
   if (!passwordMatches) {
-    return res.status(401).json({ error: "Fel restaurang eller losenord." });
+    return res.status(401).json({ error: "Fel restaurang eller lösenord." });
   }
 
   const token = jwt.sign({ restaurantId: restaurant.id, slug: restaurant.slug }, config.jwtSecret, {
@@ -46,7 +46,7 @@ router.get("/stats", requireAuth, async (req, res) => {
     .eq("restaurant_id", req.restaurantId);
 
   if (reviewsError) {
-    return res.status(500).json({ error: "Kunde inte hamta statistik." });
+    return res.status(500).json({ error: "Kunde inte hämta statistik." });
   }
 
   const { data: discountCodes, error: discountError } = await supabase
@@ -55,7 +55,7 @@ router.get("/stats", requireAuth, async (req, res) => {
     .eq("restaurant_id", req.restaurantId);
 
   if (discountError) {
-    return res.status(500).json({ error: "Kunde inte hamta rabattstatistik." });
+    return res.status(500).json({ error: "Kunde inte hämta rabattstatistik." });
   }
 
   const totalReviews = reviews.length;
@@ -97,7 +97,7 @@ router.get("/reviews", requireAuth, async (req, res) => {
     .range(from, to);
 
   if (error) {
-    return res.status(500).json({ error: "Kunde inte hamta recensioner." });
+    return res.status(500).json({ error: "Kunde inte hämta recensioner." });
   }
 
   res.json({ reviews: data, total: count, page, pageSize });
@@ -114,16 +114,16 @@ router.post("/discounts/:code/redeem", requireAuth, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Nagot gick fel, forsok igen." });
+    return res.status(500).json({ error: "Något gick fel, försök igen." });
   }
   if (!discount) {
     return res.status(404).json({ error: "Rabattkoden hittades inte." });
   }
   if (discount.used) {
-    return res.status(409).json({ error: "Rabattkoden ar redan anvand." });
+    return res.status(409).json({ error: "Rabattkoden är redan använd." });
   }
   if (new Date(discount.valid_until) < new Date()) {
-    return res.status(409).json({ error: "Rabattkoden har gatt ut." });
+    return res.status(409).json({ error: "Rabattkoden har gått ut." });
   }
 
   const { error: updateError } = await supabase
@@ -132,7 +132,7 @@ router.post("/discounts/:code/redeem", requireAuth, async (req, res) => {
     .eq("id", discount.id);
 
   if (updateError) {
-    return res.status(500).json({ error: "Kunde inte losa in koden." });
+    return res.status(500).json({ error: "Kunde inte lösa in koden." });
   }
 
   res.json({ status: "redeemed" });

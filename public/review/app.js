@@ -66,7 +66,7 @@
       const data = await res.json();
 
       if (!res.ok) {
-        formError.textContent = data.error || "Nagot gick fel, forsok igen.";
+        formError.textContent = data.error || "Något gick fel, försök igen.";
         formError.classList.remove("hidden");
         submitBtn.disabled = false;
         submitBtn.textContent = "Skicka recension";
@@ -74,6 +74,7 @@
       }
 
       if (data.status === "high_rating") {
+        document.getElementById("discount-percent").textContent = `${data.discountPercent}% rabatt`;
         document.getElementById("discount-code").textContent = data.discountCode;
         const validUntil = new Date(data.discountValidUntil);
         document.getElementById("discount-valid").textContent =
@@ -88,11 +89,11 @@
         show(resultHighEl);
       } else {
         document.getElementById("thanks-message").textContent =
-          data.message || "Tack for din feedback!";
+          data.message || "Tack för din feedback!";
         show(resultThanksEl);
       }
     } catch (err) {
-      formError.textContent = "Kunde inte na servern, forsok igen.";
+      formError.textContent = "Kunde inte nå servern, försök igen.";
       formError.classList.remove("hidden");
       submitBtn.disabled = false;
       submitBtn.textContent = "Skicka recension";

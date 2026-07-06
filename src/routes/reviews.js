@@ -12,8 +12,8 @@ const DEVICE_COOLDOWN_HOURS = 24;
 router.post("/", deviceId, reviewLimiter, async (req, res) => {
   const { restaurantSlug, rating, comment, website } = req.body || {};
 
-  // Honeypot: dolt falt i formularet som riktiga anvandare aldrig fyller i.
-  // Latsas lyckas sa botar inte lar sig att de blev stoppade.
+  // Honeypot: dolt fält i formuläret som riktiga användare aldrig fyller i.
+  // Låtsas lyckas så botar inte lär sig att de blev stoppade.
   if (website) {
     return res.json({ status: "thanks" });
   }
@@ -25,12 +25,12 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
 
   const { data: restaurant, error: restaurantError } = await supabase
     .from("restaurants")
-    .select("id, slug, google_place_id, discount_valid_days, high_rating_threshold")
+    .select("id, slug, google_place_id, discount_percent, discount_valid_days, high_rating_threshold")
     .eq("slug", restaurantSlug)
     .maybeSingle();
 
   if (restaurantError) {
-    return res.status(500).json({ error: "Kunde inte hamta restaurang." });
+    return res.status(500).json({ error: "Kunde inte hämta restaurang." });
   }
   if (!restaurant) {
     return res.status(404).json({ error: "Restaurangen hittades inte." });
@@ -49,7 +49,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     return res.status(500).json({ error: "Kunde inte kontrollera tidigare recensioner." });
   }
   if (recentReview) {
-    return res.status(429).json({ error: "Du har redan lamnat en recension nyligen. Tack!" });
+    return res.status(429).json({ error: "Du har redan lämnat en recension nyligen. Tack!" });
   }
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
@@ -75,7 +75,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
   if (!isHighRating) {
     return res.json({
       status: "thanks",
-      message: "Tack for din feedback! Den gar direkt till restaurangen.",
+      message: "Tack för din feedback! Den går direkt till restaurangen.",
     });
   }
 
@@ -90,11 +90,11 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
   });
 
   if (discountError) {
-    // Recensionen ar sparad, men vi kunde inte generera en rabattkod - gasten
-    // ska anda fa ett svar istallet for ett hart fel.
+    // Recensionen är sparad, men vi kunde inte generera en rabattkod - gästen
+    // ska ändå få ett svar istället för ett hårt fel.
     return res.json({
       status: "thanks",
-      message: "Tack for din recension!",
+      message: "Tack för din recension!",
     });
   }
 
@@ -102,13 +102,14 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     status: "high_rating",
     reviewId: review.id,
     discountCode: code,
+    discountPercent: restaurant.discount_percent,
     discountValidUntil: validUntil.toISOString(),
     googleReviewUrl: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(restaurant.google_place_id)}`,
   });
 });
 
-// Publik: review-id ar ett svargissat UUID, sa detta lacker ingen kanslig data.
-// Anvands enbart for att rakna hur manga som faktiskt klickar sig vidare.
+// Publik: review-id är ett svårgissat UUID, så detta läcker ingen känslig data.
+// Används enbart för att räkna hur många som faktiskt klickar sig vidare.
 router.post("/:id/google-click", async (req, res) => {
   const { id } = req.params;
 

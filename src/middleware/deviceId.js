@@ -1,9 +1,9 @@
 const crypto = require("crypto");
 const config = require("../config");
 
-// Satter en langlivad, slumpmassig cookie forsta gangen en gast oppnar
-// review-sidan. Anvands for att spara "samma enhet recenserade nyligen"
-// utan att kra inloggning fran gasten.
+// Sätter en långlivad, slumpmässig cookie första gången en gäst öppnar
+// review-sidan. Används för att spara "samma enhet recenserade nyligen"
+// utan att kräva inloggning från gästen.
 function deviceId(req, res, next) {
   let id = req.cookies[config.deviceIdCookieName];
   if (!id) {
