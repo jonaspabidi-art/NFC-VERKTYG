@@ -6,6 +6,7 @@ const config = require("../config");
 const requireSuperAdmin = require("../middleware/requireSuperAdmin");
 const { superAdminLoginLimiter } = require("../middleware/rateLimiters");
 const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
+const { sendMonthlyReport } = require("../lib/emailAlerts");
 
 const router = express.Router();
 
@@ -104,6 +105,40 @@ router.get("/restaurants/:id/stats", requireSuperAdmin, async (req, res) => {
     res.json(await getRestaurantStats(req.params.id));
   } catch (err) {
     res.status(500).json({ error: "Kunde inte hämta statistik." });
+  }
+});
+
+router.post("/restaurants/:id/send-report", requireSuperAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  const { data: restaurant, error } = await supabase
+    .from("restaurants")
+    .select("id, slug, name, owner_email")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: "Kunde inte hämta restaurangen." });
+  }
+  if (!restaurant) {
+    return res.status(404).json({ error: "Restaurangen hittades inte." });
+  }
+  if (!restaurant.owner_email) {
+    return res.status(400).json({ error: "Restaurangen har ingen larm-e-post satt." });
+  }
+
+  try {
+    const stats = await getRestaurantStats(restaurant.id);
+    await sendMonthlyReport(restaurant, stats);
+
+    await supabase
+      .from("restaurants")
+      .update({ last_monthly_report_sent_at: new Date().toISOString() })
+      .eq("id", restaurant.id);
+
+    res.json({ status: "sent" });
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte skicka rapporten." });
   }
 });
 

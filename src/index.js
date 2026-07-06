@@ -8,6 +8,7 @@ const restaurantsRouter = require("./routes/restaurants");
 const reviewsRouter = require("./routes/reviews");
 const adminRouter = require("./routes/admin");
 const superadminRouter = require("./routes/superadmin");
+const { startMonthlyReportScheduler } = require("./lib/monthlyReportScheduler");
 
 const app = express();
 
@@ -40,4 +41,5 @@ app.use((req, res) => {
 
 app.listen(config.port, () => {
   console.log(`Servern kör på http://localhost:${config.port}`);
+  startMonthlyReportScheduler();
 });

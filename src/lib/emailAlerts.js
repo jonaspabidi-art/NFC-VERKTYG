@@ -1,13 +1,33 @@
 const config = require("../config");
 
-// Skickar ett larmmejl till restaurangagaren via Resends REST-API. No-op om
-// RESEND_API_KEY inte ar satt eller restaurangen inte har en owner_email -
-// far ALDRIG kasta ett fel som stoppar gastens recensionsflode.
-async function sendLowRatingAlert(restaurant, review) {
-  if (!config.resendApiKey || !restaurant.owner_email) {
+// Delad hjälpfunktion mot Resends REST-API. No-op om RESEND_API_KEY eller
+// mottagaradressen saknas. Får ALDRIG kasta ett fel som stoppar anroparens
+// flöde - fångar och loggar internt istället.
+async function sendEmail({ to, subject, text }, logLabel) {
+  if (!config.resendApiKey || !to) {
     return;
   }
 
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from: config.resendFromEmail, to, subject, text }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`Kunde inte skicka ${logLabel}: ${res.status} ${body}`);
+    }
+  } catch (err) {
+    console.error(`Kunde inte skicka ${logLabel}:`, err.message);
+  }
+}
+
+async function sendLowRatingAlert(restaurant, review) {
   const commentLine = review.comment ? `"${review.comment}"` : "Ingen kommentar lämnad.";
   const createdAt = new Date(review.created_at).toLocaleString("sv-SE");
 
@@ -21,30 +41,46 @@ async function sendLowRatingAlert(restaurant, review) {
   if (config.appBaseUrl) {
     lines.push(``, `Logga in för fler detaljer: ${config.appBaseUrl}/admin/dashboard.html`);
   }
-  const text = lines.join("\n");
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: config.resendFromEmail,
-        to: restaurant.owner_email,
-        subject: `Lågt betyg hos ${restaurant.name} (${review.rating}/5)`,
-        text,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error(`Kunde inte skicka lågbetygslarm för ${restaurant.slug}: ${res.status} ${body}`);
-    }
-  } catch (err) {
-    console.error(`Kunde inte skicka lågbetygslarm för ${restaurant.slug}:`, err.message);
-  }
+  await sendEmail(
+    {
+      to: restaurant.owner_email,
+      subject: `Lågt betyg hos ${restaurant.name} (${review.rating}/5)`,
+      text: lines.join("\n"),
+    },
+    `lågbetygslarm för ${restaurant.slug}`
+  );
 }
 
-module.exports = { sendLowRatingAlert };
+async function sendMonthlyReport(restaurant, stats) {
+  const distributionLines = [5, 4, 3, 2, 1].map(
+    (rating) => `  ${rating} stjärnor: ${stats.distribution[rating] || 0}`
+  );
+
+  const lines = [
+    `Månadsrapport för ${restaurant.name} (senaste 30 dagarna).`,
+    ``,
+    `Antal recensioner: ${stats.totalReviews}`,
+    `Snittbetyg: ${stats.averageRating}`,
+    `Betygsfördelning:`,
+    ...distributionLines,
+    ``,
+    `Klick på Google-länken: ${stats.googleClicks}`,
+    `Rabattkoder utfärdade: ${stats.discountsIssued}`,
+    `Rabattkoder inlösta: ${stats.discountsUsed}`,
+  ];
+  if (config.appBaseUrl) {
+    lines.push(``, `Se alla recensioner: ${config.appBaseUrl}/admin/dashboard.html`);
+  }
+
+  await sendEmail(
+    {
+      to: restaurant.owner_email,
+      subject: `Månadsrapport för ${restaurant.name}`,
+      text: lines.join("\n"),
+    },
+    `månadsrapport för ${restaurant.slug}`
+  );
+}
+
+module.exports = { sendLowRatingAlert, sendMonthlyReport };

@@ -67,10 +67,12 @@ som använda) så adminvyns statistik går att se i verkligt bruk direkt.
 ### Migrering: lägga till en kolumn på en redan körd databas
 
 `db/schema.sql` körs bara en gång manuellt - om du redan har ett Supabase-
-projekt igång och en ny kolumn tillkommer (t.ex. `owner_email`), kör bara den
-enskilda `alter table`-raden ur schemat i SQL Editor, t.ex.:
+projekt igång och en ny kolumn tillkommer (t.ex. `owner_email` eller
+`last_monthly_report_sent_at`), kör bara den enskilda `alter table`-raden ur
+schemat i SQL Editor, t.ex.:
 ```sql
 alter table restaurants add column if not exists owner_email text;
+alter table restaurants add column if not exists last_monthly_report_sent_at timestamptz;
 ```
 
 ## Ultra-admin (hantera alla restaurangkunder)
@@ -176,6 +178,25 @@ oftast hinner vara med. Fördröjningen ligger i minnet (en enkel `setTimeout`)
 och försvinner om servern startar om/omdeployas precis då - ett känt,
 accepterat undantagsfall för v1.
 
+## Automatisk månadsrapport
+
+Restauranger med en `owner_email` satt får också ett mejl var 30:e dag med
+en sammanfattning: antal recensioner, snittbetyg, betygsfördelning,
+Google-klick, samt utfärdade/inlösta rabattkoder. Bra påminnelse för kunden
+om vad de får för sin avgift, och bra säljmaterial för dig.
+
+- Ingen extern cron behövs. Servern kollar själv vid start och sedan var
+  24:e timme om 30 dagar gått sedan `restaurants.last_monthly_report_sent_at`
+  (eller om den aldrig skickats) - se `src/lib/monthlyReportScheduler.js`.
+  Kollen är idempotent, så en omstart/redeploy varken missar eller
+  dubbelskickar en rapport.
+- Kräver samma `RESEND_API_KEY`-uppsättning som lågbetygslarmet ovan.
+- **Manuell utlösare** (bra för test, eller för att skicka en färsk rapport
+  precis inför ett säljmöte): knappen "Skicka rapport nu" i en restaurangs
+  redigeringsvy i `/superadmin/dashboard.html`, eller direkt mot
+  `POST /api/superadmin/restaurants/:id/send-report`. Fungerar oavsett när
+  förra rapporten skickades.
+
 ## Gästflödet: stjärna submittar direkt
 
 Ett tryck på en stjärna skickar in betyget omedelbart (ingen separat
@@ -203,6 +224,7 @@ snabbt vill vidare till Google-delningen/rabatten.
 | POST  | `/api/superadmin/restaurants`               | Ultra-JWT | Skapa en ny restaurang |
 | PATCH | `/api/superadmin/restaurants/:id`           | Ultra-JWT | Redigera valfri restaurang |
 | DELETE| `/api/superadmin/restaurants/:id`           | Ultra-JWT | Ta bort en restaurang |
+| POST  | `/api/superadmin/restaurants/:id/send-report` | Ultra-JWT | Skickar månadsrapporten direkt |
 
 ## Kända begränsningar / vidareutveckling
 

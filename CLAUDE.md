@@ -49,8 +49,11 @@ innan de skriver publikt.
 - `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/redeem
 - `src/routes/superadmin.js` - ultra-admin: CRUD på restauranger + drill-down-statistik
 - `src/lib/restaurantStats.js` - delad statistik/paginering (används av båda admin-rollerna)
-- `src/lib/emailAlerts.js` - `sendLowRatingAlert` via Resends REST-API (fetch,
-  ingen npm-dependency), no-op om `RESEND_API_KEY`/`owner_email` saknas
+- `src/lib/emailAlerts.js` - `sendLowRatingAlert` + `sendMonthlyReport` via
+  Resends REST-API (fetch, ingen npm-dependency), delad `sendEmail`-helper,
+  no-op om `RESEND_API_KEY`/`owner_email` saknas
+- `src/lib/monthlyReportScheduler.js` - periodisk koll (se beslut 9 nedan),
+  startas från `src/index.js` vid serverstart
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
   `requireSuperAdmin` (kräver `role: "super_admin"`), `deviceId` (cookie),
   `rateLimiters`
@@ -84,6 +87,12 @@ innan de skriver publikt.
    mejlet skickas, men förloras om servern startar om/omdeployas under
    fördröjningen. Medvetet accepterad begränsning för v1 - flytta till en
    riktig kö (t.ex. en `scheduled_at`-kolumn + cron) om det blir ett problem.
+9. **Periodiska utskick = 24h-`setInterval` + DB-tidsstämpel, inte cron.**
+   Etablerat i `src/lib/monthlyReportScheduler.js`: kör direkt vid start,
+   sedan var 24:e timme, jämför mot en `last_*_sent_at`-kolumn för att avgöra
+   om det är dags. Idempotent kring omstarter/redeploys. Återanvänd samma
+   mönster om fler periodiska utskick tillkommer (t.ex. veckorapport) -
+   ingen anledning att införa en extern cron-tjänst för det här.
 
 ## Hårda krav från Jonas
 
@@ -122,8 +131,15 @@ innan de skriver publikt.
      köpa en ny domän direkt heller) - så riktiga tredjeparts-restaurangmejl
      fungerar INTE förrän en domän skaffas/verifieras. Fråga inte om att
      återanvända bkdäck-domänen igen, redan diskuterat och avböjt.
-3. **Automatisk månadsrapport** till ägaren (antal recensioner, snitt,
-   inlösta koder) - minskar churn, blir säljmaterial.
+3. ~~**Automatisk månadsrapport**~~ - KLART (2026-07-06): mejl var 30:e dag
+   via `src/lib/monthlyReportScheduler.js` (idempotent daglig koll mot
+   `restaurants.last_monthly_report_sent_at`, ingen extern cron). Manuell
+   utlösare `POST /api/superadmin/restaurants/:id/send-report` + knapp
+   "Skicka rapport nu" i `/superadmin/dashboard.html`. Samma
+   Resend-integration som lågbetygslarmet, samma no-op-utan-config-princip.
+   `last_monthly_report_sent_at`-kolumnen kräver samma typ av separat
+   migrering som `owner_email` gjorde (fråga om Jonas kört den innan du
+   antar att schemaläggningen fungerar mot en riktig databas).
 4. **Engelska** som andraspråk på gästsidan (turister).
 5. **Branding per restaurang** (logga + accentfärg på gästsidan).
 6. **SMS-påminnelse** några timmar efter högt betyg för att slutföra

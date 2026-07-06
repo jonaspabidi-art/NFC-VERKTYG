@@ -224,6 +224,25 @@
       }
     });
 
+    document.getElementById("send-report-btn").addEventListener("click", async () => {
+      if (!editingId) return;
+      const messageEl = document.getElementById("edit-message");
+      messageEl.classList.add("hidden");
+
+      try {
+        const res = await authedFetch(`/api/superadmin/restaurants/${editingId}/send-report`, {
+          method: "POST",
+        });
+        const data = await res.json();
+
+        messageEl.textContent = res.ok ? "Rapporten skickades." : data.error || "Kunde inte skicka rapporten.";
+        messageEl.classList.remove("hidden");
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+    });
+
     document.getElementById("delete-btn").addEventListener("click", async () => {
       if (!editingId) return;
       if (!window.confirm("Ta bort restaurangen? Detta går inte att ångra.")) return;

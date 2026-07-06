@@ -11,7 +11,8 @@ create table if not exists restaurants (
   discount_percent int not null default 10,
   discount_valid_days int not null default 30,
   high_rating_threshold smallint not null default 4, -- rating >= detta räknas som "högt" betyg
-  owner_email text, -- valfri: dit lågbetygslarm skickas, ingen alert om null
+  owner_email text, -- valfri: dit lågbetygslarm/månadsrapport skickas, ingen alert om null
+  last_monthly_report_sent_at timestamptz, -- null = aldrig skickad
   created_at timestamptz not null default now()
 );
 
@@ -41,9 +42,9 @@ create table if not exists discount_codes (
 create index if not exists discount_codes_restaurant_idx on discount_codes (restaurant_id);
 create index if not exists discount_codes_code_idx on discount_codes (code);
 
--- RLS pa som forsvar-i-djupled. Backend anvander service_role-nyckeln som
--- alltid bypassar RLS, sa ingen policy behovs har (default-deny for alla
--- andra nycklar, t.ex. om anon-nyckeln nagonsin lackte till klienten).
+-- RLS på som försvar-i-djupled. Backend använder service_role-nyckeln som
+-- alltid bypassar RLS, så ingen policy behövs här (default-deny för alla
+-- andra nycklar, t.ex. om anon-nyckeln någonsin läckte till klienten).
 alter table restaurants enable row level security;
 alter table reviews enable row level security;
 alter table discount_codes enable row level security;
