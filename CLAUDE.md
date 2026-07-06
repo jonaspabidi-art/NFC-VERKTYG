@@ -46,7 +46,7 @@ innan de skriver publikt.
   Stjärntryck submittar direkt (ingen kommentar krävs vid inskick); kommentar
   läggs till efteråt via `PATCH /:id/comment` (samma "svårgissat UUID är
   auktorisering nog"-mönster som `/google-click`).
-- `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/redeem
+- `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/gottgörelse
 - `src/routes/superadmin.js` - ultra-admin: CRUD på restauranger + drill-down-statistik
 - `src/lib/restaurantStats.js` - delad statistik/paginering (används av båda admin-rollerna)
 - `src/lib/emailAlerts.js` - `sendLowRatingAlert` + `sendMonthlyReport` via
@@ -57,8 +57,14 @@ innan de skriver publikt.
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
   `requireSuperAdmin` (kräver `role: "super_admin"`), `deviceId` (cookie),
   `rateLimiters`
-- `public/review/`, `public/admin/`, `public/superadmin/` - vanilla JS-frontend,
-  delat tema i `public/shared/theme.css` (mörkt + guld, CSS-variabler)
+- `public/admin/`, `public/superadmin/` - vanilla JS-frontend, delat mörkt
+  guld-tema i `public/shared/theme.css` (CSS-variabler)
+- `public/review/` - gästsidan, EGEN ljus "Google review"-stil i
+  `public/review/style.css` (Roboto, vita kort) sedan 2026-07-06 (se
+  roadmap-punkt 9) - laddar fortfarande `shared/theme.css` för
+  CSS-variablerna (`--gold` m.fl.) som per-restaurang-branding styr, men
+  skriver över det mesta av utseendet lokalt. Ändra ALDRIG `shared/theme.css`
+  för att styla om gästsidan - det påverkar admin/ultra-admin också.
 - `db/schema.sql` + `db/seed.sql` - körs manuellt i Supabase SQL Editor
 
 ## Viktiga beslut och varför (ändra inte utan skäl)
@@ -80,8 +86,13 @@ innan de skriver publikt.
 3. **Spamskydd i tre lager** (IP-rate-limit, 24h device-cookie per restaurang,
    honeypot) - medvetet "bra nog", inte vattentätt. Jonas har bekräftat att
    det ska vara kvar. Honeypot-träff returnerar fejkad success.
-4. **Rabattkoder löses in via restaurangens admin-login** (personalen delar
-   ägarens inlogg) - inget separat personalkontosystem i v1.
+4. **Ingen digital inlösning av rabattkoder** (ändrat 2026-07-06, se
+   roadmap-punkt 9) - personalen ger rabatten direkt i kassan (högt betyg)
+   eller ringer/mejlar gästen (gottgörelse) utan att skriva in någon kod
+   någonstans. `POST /api/admin/discounts/:code/redeem` och adminvyns
+   "Lös in rabattkod"-ruta är BORTTAGNA, bygg inte tillbaka dem utan att
+   fråga - `discount_codes.used`/`used_at` finns kvar i schemat men sätts
+   aldrig av något i appen längre.
 5. **Statistik beräknas i Node, inte SQL-aggregat** - OK för nuvarande volym,
    flytta till SQL vid stora volymer (flaggat i README).
 6. **JWT-roller är strikt separerade**: restaurang-token utan `restaurantId`
@@ -196,6 +207,27 @@ innan de skriver publikt.
      Jonas avvisade det uttryckligen (risk att folk medvetet ger lågt betyg
      för att få rabatt). `reviews.contact_email`/`contact_phone` kräver
      samma typ av separat migrering som tidigare kolumner.
+9. ~~**Gästsidans UI-redesign ("Google review"-känsla)**~~ - KLART
+   (2026-07-06): Jonas designade om gästflödet i Claude Design (extern
+   design-verktyg) och lämnade över en `.dc.html`-canvas + skärmdumpar
+   (zip-fil) som facit. Implementerat rakt av i `public/review/index.html`,
+   `style.css`, `app.js` - se arkitekturavsnittet ovan för hur gästsidans
+   ljusa tema samexisterar med adminvyernas mörka tema.
+   - **Rabattkoden visas INTE längre för gästen** vid högt betyg - bara
+     procentsats + "visa skärmen i kassan". Detta var en medveten ändring
+     Jonas gjorde (bekräftat två gånger: "personal kmr inte använda en
+     kod" och senare bekräftat att gottgörelsekoder också sköts via
+     telefon/mejl istället för adminvyns kodruta) - se beslut 4 ovan.
+     Fråga inte om att lägga tillbaka en synlig kod utan att Jonas tar
+     upp det själv.
+   - Ny avatar-fallback: saknas `logo_url` visas restaurangens initialer i
+     en rund cirkel (`getInitials()` i `app.js`).
+   - Gästens faktiska stjärnbetyg (inte alltid 5) renderas ovanför
+     tacktexten vid högt betyg (`renderResultStars()`), för äkthetskänsla.
+   - i18n-nycklarna i `I18N`-ordboken byttes namn för att matcha
+     designfilens `data-i18n`-attribut (t.ex. `form_title` istället för
+     `reviewInstruction`) - `ERROR_MESSAGES`-ordboken (kopplad till
+     backendens `code`/`messageCode`) är opåverkad och oförändrad.
 
 ## Övrigt läge just nu
 

@@ -1,78 +1,71 @@
 (function () {
   const LANG_KEY = "rr_lang";
+  const GOOGLE_BONUS_PERCENT = 10;
 
   const I18N = {
     sv: {
       pageTitle: "Lämna en recension",
       loading: "Laddar...",
-      notFoundTitle: "Restaurangen hittades inte",
-      notFoundText: "Kontrollera länken eller fråga personalen om hjälp.",
-      reviewInstruction: "Hur var din upplevelse hos oss idag? Tryck på en stjärna.",
-      honeypotLabel: "Lämna detta fält tomt",
-      resultHighTitle: "Tack för ditt fina betyg!",
-      resultHighText:
-        "Dela gärna din upplevelse på Google - visa sedan upp den här skärmen i kassan så får du din rabatt.",
-      googleLinkText: "Dela recension på Google",
-      discountInstruction: "Visa upp för personalen i kassan",
-      discountValidPrefix: "Giltig till ",
-      discountSuffix: "% rabatt",
-      phoneLabel: "Vill du låsa upp extra rabatt? (valfritt)",
-      phonePlaceholder: "Ditt telefonnummer",
-      phoneInstruction:
-        "Lämna ditt nummer och dela recensionen på Google, så höjs rabatten på koden ovan. Hinner du inte just nu skickar vi en påminnelse om 15 minuter.",
-      savePhoneButton: "Lås upp extra rabatt",
+      notfound_title: "Restaurangen hittades inte",
+      notfound_body: "Kontrollera länken eller be personalen om hjälp.",
+      form_title: "Betygsätt ditt besök",
+      form_subtitle: "Tryck på en stjärna",
+      honeypot_label: "Lämna detta fält tomt",
+      high_title: "Tack för ditt fina betyg!",
+      high_body: "Dela gärna din upplevelse på Google - det hjälper oss enormt.",
+      google_btn: "Recensera på Google",
+      reward_label: "Din belöning",
+      reward_suffix: "rabatt vid nästa besök",
+      redeem_text: "Visa din recension för personalen i kassan för att få rabatten.",
+      bonus_prompt: `Lämna ditt nummer och få <strong>${GOOGLE_BONUS_PERCENT}% extra</strong> rabatt`,
+      phone_ph: "Ditt telefonnummer",
+      save: "Spara",
+      comment_prompt: "Vill du lämna en kommentar? (valfritt)",
+      comment_ph: "Skriv här...",
+      commentSuccess: "Tack, kommentaren sparades!",
+      thanks_title: "Tack för din feedback",
+      thanks_body: "Din åsikt hjälper oss att bli bättre.",
+      low_comment_prompt: "Berätta gärna vad vi kan förbättra",
+      contact_prompt: "Vill du att vi hör av oss?",
+      email_ph: "E-post",
+      phone_opt_ph: "Telefon (valfritt)",
+      send: "Skicka",
+      contactSuccess: "Tack, vi hör av oss!",
       phoneSuccessScheduled: "Tack! Vi påminner dig om du inte hunnit dela än.",
       phoneBonusUnlocked: "Grattis, din rabatt är uppdaterad!",
-      commentLabelHigh: "Vill du lägga till en kommentar? (valfritt)",
-      commentPlaceholderHigh: "Berätta gärna mer...",
-      saveCommentButton: "Spara kommentar",
-      commentSuccess: "Tack, kommentaren sparades!",
-      resultThanksTitle: "Tack för din feedback!",
-      thanksDefaultMessage: "Den går direkt till restaurangen så vi kan bli bättre.",
-      commentLabelThanks: "Berätta gärna vad som kan bli bättre (valfritt)",
-      commentPlaceholderThanks: "Din feedback går direkt till restaurangen...",
-      contactLabel: "Vill du att vi hör av oss? (valfritt)",
-      contactEmailPlaceholder: "Din e-post",
-      contactConsent:
-        "Genom att lämna dina uppgifter godkänner du att restaurangen kontaktar dig angående din upplevelse.",
-      saveContactButton: "Skicka",
-      contactSuccess: "Tack, vi hör av oss!",
       genericServerError: "Kunde inte nå servern, försök igen.",
       genericError: "Något gick fel, försök igen.",
     },
     en: {
       pageTitle: "Leave a review",
       loading: "Loading...",
-      notFoundTitle: "Restaurant not found",
-      notFoundText: "Check the link or ask staff for help.",
-      reviewInstruction: "How was your experience with us today? Tap a star.",
-      honeypotLabel: "Leave this field empty",
-      resultHighTitle: "Thanks for your great rating!",
-      resultHighText: "Please share your experience on Google - then show this screen at checkout to get your discount.",
-      googleLinkText: "Share review on Google",
-      discountInstruction: "Show this to staff at checkout",
-      discountValidPrefix: "Valid until ",
-      discountSuffix: "% discount",
-      phoneLabel: "Want to unlock extra discount? (optional)",
-      phonePlaceholder: "Your phone number",
-      phoneInstruction:
-        "Leave your number and share the review on Google to boost the discount on the code above. If you don't have time right now, we'll send a reminder in 15 minutes.",
-      savePhoneButton: "Unlock extra discount",
+      notfound_title: "Restaurant not found",
+      notfound_body: "Check the link or ask staff for help.",
+      form_title: "Rate your visit",
+      form_subtitle: "Tap a star",
+      honeypot_label: "Leave this field empty",
+      high_title: "Thanks for your great rating!",
+      high_body: "Please share your experience on Google - it helps us enormously.",
+      google_btn: "Review on Google",
+      reward_label: "Your reward",
+      reward_suffix: "discount on your next visit",
+      redeem_text: "Show your review to staff at checkout to get the discount.",
+      bonus_prompt: `Leave your number to get <strong>${GOOGLE_BONUS_PERCENT}% extra</strong> discount`,
+      phone_ph: "Your phone number",
+      save: "Save",
+      comment_prompt: "Want to leave a comment? (optional)",
+      comment_ph: "Write here...",
+      commentSuccess: "Thanks, your comment was saved!",
+      thanks_title: "Thanks for your feedback",
+      thanks_body: "Your opinion helps us improve.",
+      low_comment_prompt: "Tell us what could be better",
+      contact_prompt: "Want us to reach out?",
+      email_ph: "Email",
+      phone_opt_ph: "Phone (optional)",
+      send: "Send",
+      contactSuccess: "Thanks, we'll be in touch!",
       phoneSuccessScheduled: "Thanks! We'll remind you if you haven't shared yet.",
       phoneBonusUnlocked: "Congrats, your discount has been updated!",
-      commentLabelHigh: "Want to add a comment? (optional)",
-      commentPlaceholderHigh: "Tell us more...",
-      saveCommentButton: "Save comment",
-      commentSuccess: "Thanks, your comment was saved!",
-      resultThanksTitle: "Thanks for your feedback!",
-      thanksDefaultMessage: "It goes straight to the restaurant so we can improve.",
-      commentLabelThanks: "Tell us what could be better (optional)",
-      commentPlaceholderThanks: "Your feedback goes straight to the restaurant...",
-      contactLabel: "Want us to reach out? (optional)",
-      contactEmailPlaceholder: "Your email",
-      contactConsent: "By providing your details you agree that the restaurant may contact you about your experience.",
-      saveContactButton: "Send",
-      contactSuccess: "Thanks, we'll be in touch!",
       genericServerError: "Could not reach the server, please try again.",
       genericError: "Something went wrong, please try again.",
     },
@@ -133,6 +126,9 @@
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       el.textContent = t(el.dataset.i18n);
     });
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    });
     document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
       el.placeholder = t(el.dataset.i18nPlaceholder);
     });
@@ -179,14 +175,13 @@
 
   const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
-  function applyBranding(restaurant) {
-    if (restaurant.logoUrl) {
-      const logo = document.getElementById("restaurant-logo");
-      logo.addEventListener("error", () => logo.classList.add("hidden"));
-      logo.src = restaurant.logoUrl;
-      logo.classList.remove("hidden");
-    }
+  function getInitials(name) {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const initials = words.slice(0, 2).map((word) => word[0].toUpperCase());
+    return initials.join("") || "?";
+  }
 
+  function applyBranding(restaurant) {
     if (restaurant.accentColor && HEX_COLOR_PATTERN.test(restaurant.accentColor)) {
       const root = document.documentElement.style;
       root.setProperty("--gold", restaurant.accentColor);
@@ -194,6 +189,22 @@
       const g = parseInt(restaurant.accentColor.slice(3, 5), 16);
       const b = parseInt(restaurant.accentColor.slice(5, 7), 16);
       root.setProperty("--gold-soft", `rgba(${r}, ${g}, ${b}, 0.15)`);
+    }
+
+    const logo = document.getElementById("restaurant-logo");
+    const avatar = document.getElementById("restaurant-avatar");
+
+    if (restaurant.logoUrl) {
+      logo.addEventListener("error", () => {
+        logo.classList.add("hidden");
+        avatar.textContent = getInitials(restaurant.name);
+        avatar.classList.remove("hidden");
+      });
+      logo.src = restaurant.logoUrl;
+      logo.classList.remove("hidden");
+    } else {
+      avatar.textContent = getInitials(restaurant.name);
+      avatar.classList.remove("hidden");
     }
   }
 
@@ -214,6 +225,17 @@
   stars.forEach((star) => {
     star.addEventListener("click", () => submitRating(Number(star.dataset.value)));
   });
+
+  function renderResultStars(rating) {
+    const container = document.getElementById("result-stars");
+    container.innerHTML = "";
+    for (let i = 1; i <= 5; i++) {
+      const span = document.createElement("span");
+      span.className = i <= rating ? "star-filled" : "star-empty";
+      span.innerHTML = "&#9733;";
+      container.appendChild(span);
+    }
+  }
 
   async function submitRating(rating) {
     stars.forEach((s) => s.classList.toggle("active", Number(s.dataset.value) <= rating));
@@ -243,11 +265,8 @@
       currentReviewId = data.reviewId;
 
       if (data.status === "high_rating") {
-        document.getElementById("discount-percent").textContent = `${data.discountPercent}${t("discountSuffix")}`;
-        document.getElementById("discount-code").textContent = data.discountCode;
-        const validUntil = new Date(data.discountValidUntil);
-        document.getElementById("discount-valid").textContent =
-          t("discountValidPrefix") + validUntil.toLocaleDateString(currentLang === "sv" ? "sv-SE" : "en-GB");
+        renderResultStars(rating);
+        document.getElementById("discount-percent").textContent = data.discountPercent;
 
         const googleLink = document.getElementById("google-link");
         googleLink.href = data.googleReviewUrl;
@@ -266,7 +285,7 @@
       } else {
         document.getElementById("thanks-message").textContent = resolveMessage(
           data.messageCode,
-          data.message || t("thanksDefaultMessage")
+          data.message || t("thanks_body")
         );
         show(resultThanksEl);
       }
@@ -278,7 +297,7 @@
   }
 
   function showBonusUnlocked(discountPercent) {
-    document.getElementById("discount-percent").textContent = `${discountPercent}${t("discountSuffix")}`;
+    document.getElementById("discount-percent").textContent = discountPercent;
     const phoneMessage = document.getElementById("phone-message");
     phoneMessage.textContent = t("phoneBonusUnlocked");
     phoneMessage.classList.remove("hidden");

@@ -10,9 +10,9 @@ async function getRestaurantStats(restaurantId) {
     throw reviewsError;
   }
 
-  const { data: discountCodes, error: discountError } = await supabase
+  const { count: discountsIssued, error: discountError } = await supabase
     .from("discount_codes")
-    .select("used")
+    .select("id", { count: "exact", head: true })
     .eq("restaurant_id", restaurantId);
 
   if (discountError) {
@@ -31,16 +31,13 @@ async function getRestaurantStats(restaurantId) {
   }
 
   const averageRating = totalReviews > 0 ? ratingSum / totalReviews : 0;
-  const discountsIssued = discountCodes.length;
-  const discountsUsed = discountCodes.filter((code) => code.used).length;
 
   return {
     totalReviews,
     averageRating: Math.round(averageRating * 100) / 100,
     distribution,
     googleClicks,
-    discountsIssued,
-    discountsUsed,
+    discountsIssued: discountsIssued || 0,
   };
 }
 

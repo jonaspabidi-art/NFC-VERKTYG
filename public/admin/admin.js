@@ -82,7 +82,7 @@
       document.getElementById("stat-total").textContent = stats.totalReviews;
       document.getElementById("stat-average").textContent = stats.averageRating.toFixed(2);
       document.getElementById("stat-clicks").textContent = stats.googleClicks;
-      document.getElementById("stat-discounts").textContent = `${stats.discountsUsed} / ${stats.discountsIssued}`;
+      document.getElementById("stat-discounts").textContent = stats.discountsIssued;
 
       const distributionEl = document.getElementById("distribution");
       distributionEl.innerHTML = "";
@@ -217,33 +217,6 @@
 
         messageEl.textContent = res.ok ? "Inställningarna sparades." : data.error || "Kunde inte spara.";
         messageEl.classList.remove("hidden");
-      } catch (err) {
-        messageEl.textContent = "Kunde inte nå servern, försök igen.";
-        messageEl.classList.remove("hidden");
-      }
-    });
-
-    document.getElementById("redeem-btn").addEventListener("click", async () => {
-      const codeInput = document.getElementById("redeem-code");
-      const messageEl = document.getElementById("redeem-message");
-      const code = codeInput.value.trim();
-      if (!code) return;
-
-      messageEl.classList.add("hidden");
-
-      try {
-        const res = await authedFetch(`/api/admin/discounts/${encodeURIComponent(code)}/redeem`, {
-          method: "POST",
-        });
-        const data = await res.json();
-
-        messageEl.textContent = res.ok ? "Rabattkoden är inlöst." : data.error || "Kunde inte lösa in koden.";
-        messageEl.classList.remove("hidden");
-
-        if (res.ok) {
-          codeInput.value = "";
-          loadStats();
-        }
       } catch (err) {
         messageEl.textContent = "Kunde inte nå servern, försök igen.";
         messageEl.classList.remove("hidden");

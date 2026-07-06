@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lämna en recension</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/shared/theme.css" />
   <link rel="stylesheet" href="/review/style.css" />
 </head>
@@ -15,18 +18,25 @@
     </div>
 
     <div id="loading" class="card center">
+      <div class="spinner"></div>
       <p class="muted" data-i18n="loading">Laddar...</p>
     </div>
 
     <div id="not-found" class="card center hidden">
-      <h2 data-i18n="notFoundTitle">Restaurangen hittades inte</h2>
-      <p class="muted" data-i18n="notFoundText">Kontrollera länken eller fråga personalen om hjälp.</p>
+      <div class="icon-circle icon-circle-muted">!</div>
+      <h2 data-i18n="notfound_title">Restaurangen hittades inte</h2>
+      <p class="muted" data-i18n="notfound_body">Kontrollera länken eller be personalen om hjälp.</p>
     </div>
 
-    <div id="review-form" class="card hidden">
-      <img id="restaurant-logo" class="restaurant-logo hidden" alt="" />
-      <h1><span id="restaurant-name" class="accent"></span></h1>
-      <p class="muted" data-i18n="reviewInstruction">Hur var din upplevelse hos oss idag? Tryck på en stjärna.</p>
+    <div id="review-form" class="card hidden center">
+      <div class="avatar-wrap">
+        <img id="restaurant-logo" class="restaurant-logo hidden" alt="" />
+        <div id="restaurant-avatar" class="restaurant-avatar hidden"></div>
+      </div>
+      <h1><span id="restaurant-name" class="restaurant-name"></span></h1>
+
+      <p class="form-title" data-i18n="form_title">Betygsätt ditt besök</p>
+      <p class="muted" data-i18n="form_subtitle">Tryck på en stjärna</p>
 
       <div class="stars" id="stars">
         <span class="star" data-value="1">&#9733;</span>
@@ -37,94 +47,81 @@
       </div>
 
       <div class="honeypot-field" aria-hidden="true">
-        <label for="website" data-i18n="honeypotLabel">Lämna detta fält tomt</label>
+        <label for="website" data-i18n="honeypot_label">Lämna detta fält tomt</label>
         <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
       </div>
 
       <p id="form-error" class="error-text hidden"></p>
     </div>
 
-    <div id="result-high" class="card hidden">
-      <h2 data-i18n="resultHighTitle">Tack för ditt fina betyg!</h2>
-      <p data-i18n="resultHighText">
-        Dela gärna din upplevelse på Google - visa sedan upp den här skärmen i kassan så får du din rabatt.
-      </p>
+    <div id="result-high" class="card hidden center">
+      <div class="result-stars" id="result-stars"></div>
+      <h2 data-i18n="high_title">Tack för ditt fina betyg!</h2>
+      <p class="muted" data-i18n="high_body">Dela gärna din upplevelse på Google - det hjälper oss enormt.</p>
 
-      <a href="#" id="google-link" class="button" target="_blank" rel="noopener" data-i18n="googleLinkText"
-        >Dela recension på Google</a
-      >
+      <a href="#" id="google-link" class="google-button" target="_blank" rel="noopener">
+        <span class="google-g">G</span>
+        <span data-i18n="google_btn">Recensera på Google</span>
+      </a>
 
-      <div class="discount-code" id="discount-box">
-        <div class="discount-percent" id="discount-percent"></div>
-        <div class="muted" data-i18n="discountInstruction">Visa upp för personalen i kassan</div>
-        <div class="discount-fine-print" id="discount-code"></div>
-        <div class="muted" id="discount-valid"></div>
+      <div class="reward-box" id="discount-box">
+        <div class="reward-label" data-i18n="reward_label">Din belöning</div>
+        <div class="reward-percent"><span id="discount-percent">10</span><span>%</span></div>
+        <div class="reward-suffix" data-i18n="reward_suffix">rabatt vid nästa besök</div>
+        <div class="reward-instruction">
+          <span class="check-badge">&#10003;</span>
+          <span data-i18n="redeem_text">Visa din recension för personalen i kassan för att få rabatten.</span>
+        </div>
       </div>
 
-      <div class="comment-followup" id="phone-followup">
-        <label for="bonus-phone" data-i18n="phoneLabel">Vill du låsa upp extra rabatt? (valfritt)</label>
-        <input type="tel" id="bonus-phone" placeholder="Ditt telefonnummer" data-i18n-placeholder="phonePlaceholder" />
-        <p class="muted" data-i18n="phoneInstruction">
-          Lämna ditt nummer och dela recensionen på Google, så höjs rabatten på koden ovan.
-          Hinner du inte just nu skickar vi en påminnelse om 15 minuter.
-        </p>
-        <button id="save-phone" class="secondary" type="button" data-i18n="savePhoneButton">
-          Lås upp extra rabatt
-        </button>
-        <p id="phone-message" class="muted hidden"></p>
+      <div class="divider"></div>
+
+      <div class="followup-block" id="phone-followup">
+        <label for="bonus-phone" data-i18n-html="bonus_prompt"
+          >Lämna ditt nummer och få <strong>10% extra</strong> rabatt</label
+        >
+        <div class="inline-row">
+          <input type="tel" id="bonus-phone" placeholder="Ditt telefonnummer" data-i18n-placeholder="phone_ph" />
+          <button id="save-phone" class="pill-btn" type="button" data-i18n="save">Spara</button>
+        </div>
+        <p id="phone-message" class="hint-success hidden"></p>
       </div>
 
-      <div class="comment-followup" id="comment-followup-high">
-        <label for="comment-high" data-i18n="commentLabelHigh">Vill du lägga till en kommentar? (valfritt)</label>
-        <textarea
-          id="comment-high"
-          rows="3"
-          placeholder="Berätta gärna mer..."
-          data-i18n-placeholder="commentPlaceholderHigh"
-        ></textarea>
-        <button id="save-comment-high" class="secondary" type="button" data-i18n="saveCommentButton">
-          Spara kommentar
-        </button>
-        <p id="comment-message-high" class="muted hidden"></p>
+      <div class="followup-block" id="comment-followup-high">
+        <label for="comment-high" data-i18n="comment_prompt">Vill du lämna en kommentar? (valfritt)</label>
+        <textarea id="comment-high" rows="3" placeholder="Skriv här..." data-i18n-placeholder="comment_ph"></textarea>
+        <button id="save-comment-high" class="pill-btn full" type="button" data-i18n="save">Spara</button>
+        <p id="comment-message-high" class="hint-success hidden"></p>
       </div>
     </div>
 
     <div id="result-thanks" class="card hidden center">
-      <h2 data-i18n="resultThanksTitle">Tack för din feedback!</h2>
-      <p class="muted" id="thanks-message" data-i18n="thanksDefaultMessage">
-        Den går direkt till restaurangen så vi kan bli bättre.
-      </p>
+      <div class="icon-circle">&#10003;</div>
+      <h2 data-i18n="thanks_title">Tack för din feedback</h2>
+      <p class="muted" id="thanks-message" data-i18n="thanks_body">Din åsikt hjälper oss att bli bättre.</p>
 
-      <div class="comment-followup" id="comment-followup-thanks">
-        <label for="comment-thanks" data-i18n="commentLabelThanks"
-          >Berätta gärna vad som kan bli bättre (valfritt)</label
-        >
+      <div class="divider"></div>
+
+      <div class="followup-block" id="comment-followup-thanks">
+        <label for="comment-thanks" data-i18n="low_comment_prompt">Berätta gärna vad vi kan förbättra</label>
         <textarea
           id="comment-thanks"
           rows="3"
-          placeholder="Din feedback går direkt till restaurangen..."
-          data-i18n-placeholder="commentPlaceholderThanks"
+          placeholder="Skriv här..."
+          data-i18n-placeholder="comment_ph"
         ></textarea>
-        <button id="save-comment-thanks" class="secondary" type="button" data-i18n="saveCommentButton">
-          Spara kommentar
-        </button>
-        <p id="comment-message-thanks" class="muted hidden"></p>
+        <button id="save-comment-thanks" class="pill-btn full" type="button" data-i18n="save">Spara</button>
+        <p id="comment-message-thanks" class="hint-success hidden"></p>
       </div>
 
-      <div class="comment-followup" id="contact-followup">
-        <label data-i18n="contactLabel">Vill du att vi hör av oss? (valfritt)</label>
-        <input type="email" id="contact-email" placeholder="Din e-post" data-i18n-placeholder="contactEmailPlaceholder" />
-        <input
-          type="tel"
-          id="contact-phone"
-          placeholder="Ditt telefonnummer"
-          data-i18n-placeholder="phonePlaceholder"
-        />
-        <p class="muted" data-i18n="contactConsent">
-          Genom att lämna dina uppgifter godkänner du att restaurangen kontaktar dig angående din upplevelse.
-        </p>
-        <button id="save-contact" class="secondary" type="button" data-i18n="saveContactButton">Skicka</button>
-        <p id="contact-message" class="muted hidden"></p>
+      <div class="divider"></div>
+
+      <div class="followup-block" id="contact-followup">
+        <label data-i18n="contact_prompt">Vill du att vi hör av oss?</label>
+        <input type="email" id="contact-email" placeholder="E-post" data-i18n-placeholder="email_ph" />
+        <input type="tel" id="contact-phone" placeholder="Telefon (valfritt)" data-i18n-placeholder="phone_opt_ph" />
+        <button id="save-contact" class="pill-btn full" type="button" data-i18n="send">Skicka</button>
+        <p id="contact-message" class="hint-success hidden"></p>
       </div>
     </div>
   </div>

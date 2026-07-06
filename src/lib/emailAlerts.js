@@ -72,7 +72,6 @@ async function sendMonthlyReport(restaurant, stats) {
     ``,
     `Klick på Google-länken: ${stats.googleClicks}`,
     `Rabattkoder utfärdade: ${stats.discountsIssued}`,
-    `Rabattkoder inlösta: ${stats.discountsUsed}`,
   ];
   if (config.appBaseUrl) {
     lines.push(``, `Se alla recensioner: ${config.appBaseUrl}/admin/dashboard.html`);

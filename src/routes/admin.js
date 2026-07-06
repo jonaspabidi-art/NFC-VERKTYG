@@ -203,39 +203,4 @@ router.post("/reviews/:id/recovery-discount", requireAuth, async (req, res) => {
   res.json({ isNew: true, discountCode: code, discountValidUntil: validUntil.toISOString() });
 });
 
-router.post("/discounts/:code/redeem", requireAuth, async (req, res) => {
-  const { code } = req.params;
-
-  const { data: discount, error } = await supabase
-    .from("discount_codes")
-    .select("id, used, valid_until, restaurant_id")
-    .eq("code", code.toUpperCase())
-    .eq("restaurant_id", req.restaurantId)
-    .maybeSingle();
-
-  if (error) {
-    return res.status(500).json({ error: "Något gick fel, försök igen." });
-  }
-  if (!discount) {
-    return res.status(404).json({ error: "Rabattkoden hittades inte." });
-  }
-  if (discount.used) {
-    return res.status(409).json({ error: "Rabattkoden är redan använd." });
-  }
-  if (new Date(discount.valid_until) < new Date()) {
-    return res.status(409).json({ error: "Rabattkoden har gått ut." });
-  }
-
-  const { error: updateError } = await supabase
-    .from("discount_codes")
-    .update({ used: true, used_at: new Date().toISOString() })
-    .eq("id", discount.id);
-
-  if (updateError) {
-    return res.status(500).json({ error: "Kunde inte lösa in koden." });
-  }
-
-  res.json({ status: "redeemed" });
-});
-
 module.exports = router;

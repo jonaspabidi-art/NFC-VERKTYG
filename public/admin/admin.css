@@ -17,20 +17,6 @@
   text-decoration: underline;
 }
 
-.redeem-row {
-  display: flex;
-  gap: 10px;
-}
-
-.redeem-row input {
-  flex: 1;
-}
-
-.redeem-row button {
-  width: auto;
-  white-space: nowrap;
-}
-
 .pagination {
   display: flex;
   justify-content: center;

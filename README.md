@@ -221,7 +221,7 @@ för närvarande 10 procentenheter utöver ordinarie rabatt) genom att dela
 recensionen på Google.
 
 - **Direkt bonus**: har gästen redan klickat på Google-länken innan de
-  lämnar numret, läggs bonusen på omedelbart och rabattkoden på skärmen
+  lämnar numret, läggs bonusen på omedelbart och procentsatsen på skärmen
   uppdateras direkt - ingen SMS behövs.
 - **SMS-påminnelse**: har de inte klickat än, väntar systemet 15 minuter
   (`GOOGLE_BONUS_REMINDER_DELAY_MS`) och skickar då ett SMS med
@@ -278,6 +278,11 @@ lågbetygslarmet till ägaren, precis som en eventuell kommentar.
 - **Medvetet manuellt, inte automatiskt** - till skillnad från höga betyg
   genereras ingen kod automatiskt vid lågt betyg, för att undvika att någon
   avsiktligt ger lågt betyg för att utlösa en rabatt.
+- **Ingen digital inlösning** (2026-07-06): restaurangen ringer eller
+  mejlar gästen om rabatten direkt istället för att någon skriver in koden
+  i adminvyn - `POST /api/admin/discounts/:code/redeem` och "Lös in
+  rabattkod"-rutan är borttagna. `discount_codes.used`/`used_at` finns kvar
+  i schemat men sätts inte längre av något i appen.
 
 ## Branding per restaurang (logga + accentfärg)
 
@@ -295,6 +300,30 @@ mörka/guld-temat:
 - Om loggans URL inte går att ladda (trasig länk) döljs bilden tyst istället
   för att visa en trasig bild-ikon.
 
+## Gästsidans design (2026-07-06, "Google review"-känsla)
+
+Gästsidan (`public/review/`) fick en visuell omdesign för att kännas igen
+som ett Google-recensionsflöde direkt när gästen landar på länken - inte en
+kopia av Googles varumärke, men samma Material-inspirerade formspråk.
+
+- Ljust kort-UI (`#f5f6f7`-bakgrund, vita kort, Roboto via Google Fonts)
+  istället för det mörka temat, bara på gästsidan - admin/ultra-admin
+  behåller det mörka guld-temat oförändrat (separat stylesheet, ingen
+  delning av utseende).
+- Solida guld-stjärnor, en vit Google-liknande delningsknapp (färgad "G"
+  byggd med en CSS `conic-gradient`, ingen Google-logotypfil används av
+  varumärkesskäl).
+- Restaurangens logga visas som förut; saknas en logga visas istället en
+  rund avatar med restaurangens initialer (t.ex. "TL" för Trattoria Lucia),
+  precis som Googles egna kontaktavatarer.
+- Efter ett högt betyg visas gästens FAKTISKA stjärnbetyg (inte alltid 5)
+  ovanför tack-texten, för att förstärka känslan av en riktig recension.
+- Fortfarande allt via `var(--gold)`/`var(--gold-soft)`, så per-restaurang-
+  branding (se nedan) fungerar exakt som förut även med den nya designen.
+- **Ingen rabattkod visas längre för gästen** vid högt betyg (medvetet
+  beslut, se nästa stycke) - bara procentsats + "visa skärmen för
+  personalen i kassan".
+
 ## API-översikt
 
 | Metod | Endpoint                                   | Auth   | Beskrivning |
@@ -311,7 +340,6 @@ mörka/guld-temat:
 | GET   | `/api/admin/stats`                          | JWT    | Statistik för inloggad restaurang |
 | GET   | `/api/admin/reviews`                        | JWT    | Paginerad recensionslista |
 | POST  | `/api/admin/reviews/:id/recovery-discount`  | JWT    | Skickar en manuell gottgörelsekod |
-| POST  | `/api/admin/discounts/:code/redeem`         | JWT    | Markerar en rabattkod som använd |
 | POST  | `/api/superadmin/login`                     | Publik | Ultra-admin-inloggning (bara lösenord) |
 | GET   | `/api/superadmin/restaurants`               | Ultra-JWT | Lista alla restauranger + statistik |
 | POST  | `/api/superadmin/restaurants`               | Ultra-JWT | Skapa en ny restaurang |

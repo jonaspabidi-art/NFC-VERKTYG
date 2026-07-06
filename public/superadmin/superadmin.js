@@ -127,7 +127,7 @@
       document.getElementById("sa-stat-total").textContent = stats.totalReviews;
       document.getElementById("sa-stat-average").textContent = stats.averageRating.toFixed(2);
       document.getElementById("sa-stat-clicks").textContent = stats.googleClicks;
-      document.getElementById("sa-stat-discounts").textContent = `${stats.discountsUsed} / ${stats.discountsIssued}`;
+      document.getElementById("sa-stat-discounts").textContent = stats.discountsIssued;
 
       const distributionEl = document.getElementById("sa-distribution");
       distributionEl.innerHTML = "";
