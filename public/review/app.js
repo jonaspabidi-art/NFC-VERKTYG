@@ -130,4 +130,40 @@
 
   wireCommentFollowup("comment-high", "save-comment-high", "comment-message-high");
   wireCommentFollowup("comment-thanks", "save-comment-thanks", "comment-message-thanks");
+
+  document.getElementById("save-contact").addEventListener("click", async () => {
+    const emailInput = document.getElementById("contact-email");
+    const phoneInput = document.getElementById("contact-phone");
+    const button = document.getElementById("save-contact");
+    const message = document.getElementById("contact-message");
+
+    const email = emailInput.value.trim();
+    const phone = phoneInput.value.trim();
+    if (!email && !phone) return;
+
+    message.classList.add("hidden");
+    button.disabled = true;
+
+    try {
+      const res = await fetch(`/api/reviews/${currentReviewId}/contact`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, phone }),
+      });
+      const data = await res.json();
+
+      message.textContent = res.ok ? "Tack, vi hör av oss!" : data.error || "Kunde inte spara uppgifterna.";
+      message.classList.remove("hidden");
+      if (res.ok) {
+        emailInput.disabled = true;
+        phoneInput.disabled = true;
+      } else {
+        button.disabled = false;
+      }
+    } catch (err) {
+      message.textContent = "Kunde inte nå servern, försök igen.";
+      message.classList.remove("hidden");
+      button.disabled = false;
+    }
+  });
 })();

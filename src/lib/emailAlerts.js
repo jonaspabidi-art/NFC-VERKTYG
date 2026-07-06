@@ -38,6 +38,11 @@ async function sendLowRatingAlert(restaurant, review) {
     `Kommentar: ${commentLine}`,
     `Tidpunkt: ${createdAt}`,
   ];
+  if (review.contact_email || review.contact_phone) {
+    lines.push(``, `Gästen vill bli kontaktad:`);
+    if (review.contact_email) lines.push(`  E-post: ${review.contact_email}`);
+    if (review.contact_phone) lines.push(`  Telefon: ${review.contact_phone}`);
+  }
   if (config.appBaseUrl) {
     lines.push(``, `Logga in för fler detaljer: ${config.appBaseUrl}/admin/dashboard.html`);
   }
@@ -83,4 +88,29 @@ async function sendMonthlyReport(restaurant, stats) {
   );
 }
 
-module.exports = { sendLowRatingAlert, sendMonthlyReport };
+async function sendRecoveryDiscountEmail(restaurant, review, code, discountPercent, validUntil) {
+  const validUntilText = new Date(validUntil).toLocaleDateString("sv-SE");
+
+  const text = [
+    `Hej!`,
+    ``,
+    `Tack för din feedback till ${restaurant.name}. Vi vill gärna bjuda på`,
+    `${discountPercent}% rabatt vid ditt nästa besök.`,
+    ``,
+    `Kod: ${code}`,
+    `Giltig till: ${validUntilText}`,
+    ``,
+    `Visa upp koden i kassan vid ditt nästa besök.`,
+  ].join("\n");
+
+  await sendEmail(
+    {
+      to: review.contact_email,
+      subject: `En rabattkod från ${restaurant.name}`,
+      text,
+    },
+    `gottgörelsekod för ${restaurant.slug}`
+  );
+}
+
+module.exports = { sendLowRatingAlert, sendMonthlyReport, sendRecoveryDiscountEmail };

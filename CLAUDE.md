@@ -146,6 +146,15 @@ innan de skriver publikt.
    Google-recensionen - diskuterad och medvetet parkerad (PII/GDPR + kostnad,
    opt-in-fält efter inskickat betyg). Jonas tror på den för konvertering.
 7. **Demo-restaurang** med snygg data för säljmöten.
+8. ~~**Kontaktuppgifter + gottgörelsekod vid lågt betyg**~~ - KLART
+   (2026-07-06, Jonas egen idé): gästen kan valfritt lämna e-post/telefon
+   efter lågt betyg (`PATCH /api/reviews/:id/contact`), följer med i
+   lågbetygslarmet. Ägaren kan MANUELLT trycka "Skicka gottgörelsekod" i
+   `/admin/dashboard.html` (`POST /api/admin/reviews/:id/recovery-discount`)
+   - **bygg ALDRIG om detta till automatisk generering vid lågt betyg**,
+     Jonas avvisade det uttryckligen (risk att folk medvetet ger lågt betyg
+     för att få rabatt). `reviews.contact_email`/`contact_phone` kräver
+     samma typ av separat migrering som tidigare kolumner.
 
 ## Övrigt läge just nu
 

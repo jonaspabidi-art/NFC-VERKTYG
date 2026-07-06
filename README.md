@@ -73,6 +73,8 @@ schemat i SQL Editor, t.ex.:
 ```sql
 alter table restaurants add column if not exists owner_email text;
 alter table restaurants add column if not exists last_monthly_report_sent_at timestamptz;
+alter table reviews add column if not exists contact_email text;
+alter table reviews add column if not exists contact_phone text;
 ```
 
 ## Ultra-admin (hantera alla restaurangkunder)
@@ -205,6 +207,21 @@ efteråt (`PATCH /api/reviews/:id/comment`), eftersom den är mest värdefull
 vid låga betyg och annars bara var friktion i vägen för nöjda gäster som
 snabbt vill vidare till Google-delningen/rabatten.
 
+## Kontaktuppgifter vid lågt betyg + gottgörelsekod
+
+Efter ett lågt betyg kan gästen valfritt lämna e-post och/eller telefon om
+de vill att restaurangen hör av sig personligen - följer med i
+lågbetygslarmet till ägaren, precis som en eventuell kommentar.
+- Inget kryssruta-baserat samtycke - fälten är tydligt frivilliga, med en
+  kort text om att uppgifterna delas med restaurangen om de lämnas.
+- Ägaren kan därefter, om de vill, trycka "Skicka gottgörelsekod" i sin
+  adminvy (`/admin/dashboard.html`, recensionslistan) för att skicka en
+  rabattkod till just den gästen (mejlas automatiskt om gästen lämnat sin
+  e-post, annars visas koden i adminvyn för att läsas upp t.ex. i telefon).
+- **Medvetet manuellt, inte automatiskt** - till skillnad från höga betyg
+  genereras ingen kod automatiskt vid lågt betyg, för att undvika att någon
+  avsiktligt ger lågt betyg för att utlösa en rabatt.
+
 ## API-översikt
 
 | Metod | Endpoint                                   | Auth   | Beskrivning |
@@ -212,12 +229,14 @@ snabbt vill vidare till Google-delningen/rabatten.
 | GET   | `/api/restaurants/:slug`                    | Publik | Restaurangnamn för review-sidan |
 | POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
 | PATCH | `/api/reviews/:id/comment`                  | Publik | Lägger till/uppdaterar kommentaren i efterhand |
+| PATCH | `/api/reviews/:id/contact`                  | Publik | Lämnar valfria kontaktuppgifter (lågt betyg) |
 | POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken |
 | POST  | `/api/admin/login`                          | Publik | Loggar in, returnerar JWT |
 | GET   | `/api/admin/settings`                       | JWT    | Restaurangens rabattinställningar |
 | PATCH | `/api/admin/settings`                       | JWT    | Uppdaterar rabattinställningar |
 | GET   | `/api/admin/stats`                          | JWT    | Statistik för inloggad restaurang |
 | GET   | `/api/admin/reviews`                        | JWT    | Paginerad recensionslista |
+| POST  | `/api/admin/reviews/:id/recovery-discount`  | JWT    | Skickar en manuell gottgörelsekod |
 | POST  | `/api/admin/discounts/:code/redeem`         | JWT    | Markerar en rabattkod som använd |
 | POST  | `/api/superadmin/login`                     | Publik | Ultra-admin-inloggning (bara lösenord) |
 | GET   | `/api/superadmin/restaurants`               | Ultra-JWT | Lista alla restauranger + statistik |

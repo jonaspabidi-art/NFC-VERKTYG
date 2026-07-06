@@ -24,6 +24,8 @@ create table if not exists reviews (
   device_id text not null,
   ip_hash text not null,
   clicked_google boolean not null default false,
+  contact_email text, -- valfri: gästen vill bli kontaktad av restaurangen
+  contact_phone text,
   created_at timestamptz not null default now()
 );
 create index if not exists reviews_restaurant_idx on reviews (restaurant_id, created_at desc);

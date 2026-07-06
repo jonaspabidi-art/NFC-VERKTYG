@@ -6,6 +6,8 @@ const config = require("../config");
 const requireAuth = require("../middleware/requireAuth");
 const { loginLimiter } = require("../middleware/rateLimiters");
 const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
+const { generateDiscountCode } = require("../lib/discountCode");
+const { sendRecoveryDiscountEmail } = require("../lib/emailAlerts");
 
 const router = express.Router();
 
@@ -122,6 +124,67 @@ router.get("/reviews", requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Kunde inte hämta recensioner." });
   }
+});
+
+router.post("/reviews/:id/recovery-discount", requireAuth, async (req, res) => {
+  const { id } = req.params;
+
+  const { data: review, error: reviewError } = await supabase
+    .from("reviews")
+    .select("id, restaurant_id, contact_email")
+    .eq("id", id)
+    .eq("restaurant_id", req.restaurantId)
+    .maybeSingle();
+
+  if (reviewError) {
+    return res.status(500).json({ error: "Kunde inte hämta recensionen." });
+  }
+  if (!review) {
+    return res.status(404).json({ error: "Recensionen hittades inte." });
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from("discount_codes")
+    .select("code, valid_until")
+    .eq("review_id", review.id)
+    .maybeSingle();
+
+  if (existingError) {
+    return res.status(500).json({ error: "Något gick fel, försök igen." });
+  }
+  if (existing) {
+    return res.json({ isNew: false, discountCode: existing.code, discountValidUntil: existing.valid_until });
+  }
+
+  const { data: restaurant, error: restaurantError } = await supabase
+    .from("restaurants")
+    .select("slug, name, discount_percent, discount_valid_days")
+    .eq("id", req.restaurantId)
+    .single();
+
+  if (restaurantError) {
+    return res.status(500).json({ error: "Kunde inte hämta restaurangen." });
+  }
+
+  const validUntil = new Date(Date.now() + restaurant.discount_valid_days * 24 * 60 * 60 * 1000);
+  const code = generateDiscountCode(restaurant.slug);
+
+  const { error: insertError } = await supabase.from("discount_codes").insert({
+    restaurant_id: req.restaurantId,
+    review_id: review.id,
+    code,
+    valid_until: validUntil.toISOString(),
+  });
+
+  if (insertError) {
+    return res.status(500).json({ error: "Kunde inte skapa rabattkoden." });
+  }
+
+  if (review.contact_email) {
+    await sendRecoveryDiscountEmail(restaurant, review, code, restaurant.discount_percent, validUntil);
+  }
+
+  res.json({ isNew: true, discountCode: code, discountValidUntil: validUntil.toISOString() });
 });
 
 router.post("/discounts/:code/redeem", requireAuth, async (req, res) => {

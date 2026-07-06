@@ -50,7 +50,7 @@ async function getRestaurantReviews(restaurantId, page, pageSize) {
 
   const { data, error, count } = await supabase
     .from("reviews")
-    .select("id, rating, comment, clicked_google, created_at", { count: "exact" })
+    .select("id, rating, comment, clicked_google, contact_email, contact_phone, created_at", { count: "exact" })
     .eq("restaurant_id", restaurantId)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -59,7 +59,28 @@ async function getRestaurantReviews(restaurantId, page, pageSize) {
     throw error;
   }
 
-  return { reviews: data, total: count, page, pageSize };
+  const reviewIds = data.map((review) => review.id);
+  const { data: discountCodes, error: discountError } =
+    reviewIds.length > 0
+      ? await supabase.from("discount_codes").select("review_id, code, valid_until").in("review_id", reviewIds)
+      : { data: [], error: null };
+
+  if (discountError) {
+    throw discountError;
+  }
+
+  const discountByReviewId = {};
+  for (const discount of discountCodes) {
+    discountByReviewId[discount.review_id] = discount;
+  }
+
+  const reviews = data.map((review) => ({
+    ...review,
+    discount_code: discountByReviewId[review.id]?.code || null,
+    discount_valid_until: discountByReviewId[review.id]?.valid_until || null,
+  }));
+
+  return { reviews, total: count, page, pageSize };
 }
 
 module.exports = { getRestaurantStats, getRestaurantReviews };

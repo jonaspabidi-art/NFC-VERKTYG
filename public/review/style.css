@@ -36,7 +36,8 @@
   margin-bottom: 6px;
 }
 
-.comment-followup textarea {
+.comment-followup textarea,
+.comment-followup input {
   margin-bottom: 10px;
 }
 

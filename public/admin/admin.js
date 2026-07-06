@@ -115,12 +115,50 @@
       data.reviews.forEach((review) => {
         const row = document.createElement("tr");
         const date = new Date(review.created_at).toLocaleDateString("sv-SE");
+        const contactLines = [];
+        if (review.contact_email) contactLines.push(escapeHtml(review.contact_email));
+        if (review.contact_phone) contactLines.push(escapeHtml(review.contact_phone));
+        const contactHtml = contactLines.length > 0 ? contactLines.join("<br>") : '<span class="muted">-</span>';
+
+        let actionHtml = '<span class="muted">-</span>';
+        if (review.discount_code) {
+          actionHtml = `<span class="rating-badge">${escapeHtml(review.discount_code)}</span>`;
+        } else if (review.contact_email || review.contact_phone) {
+          actionHtml = `<button class="secondary recovery-btn">Skicka gottgörelsekod</button>`;
+        }
+
         row.innerHTML = `
           <td>${date}</td>
           <td class="rating-badge">${review.rating}</td>
           <td>${review.comment ? escapeHtml(review.comment) : '<span class="muted">-</span>'}</td>
           <td>${review.clicked_google ? "Ja" : "Nej"}</td>
+          <td>${contactHtml}</td>
+          <td>${actionHtml}</td>
         `;
+
+        const recoveryBtn = row.querySelector(".recovery-btn");
+        if (recoveryBtn) {
+          recoveryBtn.addEventListener("click", async () => {
+            recoveryBtn.disabled = true;
+            recoveryBtn.textContent = "Skickar...";
+            try {
+              const res = await authedFetch(`/api/admin/reviews/${review.id}/recovery-discount`, {
+                method: "POST",
+              });
+              const result = await res.json();
+              if (res.ok) {
+                recoveryBtn.outerHTML = `<span class="rating-badge">${escapeHtml(result.discountCode)}</span>`;
+              } else {
+                recoveryBtn.textContent = result.error || "Kunde inte skicka koden.";
+                recoveryBtn.disabled = false;
+              }
+            } catch (err) {
+              recoveryBtn.textContent = "Kunde inte nå servern.";
+              recoveryBtn.disabled = false;
+            }
+          });
+        }
+
         body.appendChild(row);
       });
 

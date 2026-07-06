@@ -8,6 +8,7 @@ const { reviewLimiter } = require("../middleware/rateLimiters");
 
 const router = express.Router();
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEVICE_COOLDOWN_HOURS = 24;
 // Ger gästen tid att lägga till en kommentar (PATCH /:id/comment) på
 // resultatsidan innan larmet går iväg, så ägaren oftast får texten också.
@@ -22,7 +23,7 @@ function scheduleLowRatingAlert(restaurant, reviewId) {
     try {
       const { data: freshReview } = await supabase
         .from("reviews")
-        .select("rating, comment, created_at")
+        .select("rating, comment, contact_email, contact_phone, created_at")
         .eq("id", reviewId)
         .maybeSingle();
 
@@ -159,6 +160,46 @@ router.patch("/:id/comment", reviewLimiter, async (req, res) => {
 
   if (error) {
     return res.status(500).json({ error: "Kunde inte spara kommentaren." });
+  }
+  if (!data) {
+    return res.status(404).json({ error: "Recensionen hittades inte." });
+  }
+
+  res.json({ status: "ok" });
+});
+
+// Publik: review-id är ett svårgissat UUID. Gästen kan valfritt lämna
+// kontaktuppgifter (efter ett lågt betyg) om de vill att restaurangen hör
+// av sig - följer med i lågbetygslarmet till ägaren.
+router.patch("/:id/contact", reviewLimiter, async (req, res) => {
+  const { id } = req.params;
+  const { email, phone } = req.body || {};
+
+  const trimmedEmail = typeof email === "string" ? email.trim() : "";
+  const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
+
+  if (!trimmedEmail && !trimmedPhone) {
+    return res.status(400).json({ error: "Ange e-post eller telefonnummer." });
+  }
+  if (trimmedEmail && !EMAIL_PATTERN.test(trimmedEmail)) {
+    return res.status(400).json({ error: "Ogiltig e-postadress." });
+  }
+  if (trimmedPhone && (trimmedPhone.length < 6 || trimmedPhone.length > 30)) {
+    return res.status(400).json({ error: "Ogiltigt telefonnummer." });
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({
+      contact_email: trimmedEmail || null,
+      contact_phone: trimmedPhone || null,
+    })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: "Kunde inte spara kontaktuppgifterna." });
   }
   if (!data) {
     return res.status(404).json({ error: "Recensionen hittades inte." });
