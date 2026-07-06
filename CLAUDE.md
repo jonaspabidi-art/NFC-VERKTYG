@@ -40,7 +40,10 @@ innan de skriver publikt.
 ## Arkitektur (kortversion)
 
 - `src/index.js` - Express, serverar API + statiska filer från `public/`
-- `src/routes/reviews.js` - gästflödet: spamskydd, spara review, rabattkod
+- `src/routes/reviews.js` - gästflödet: spamskydd, spara review, rabattkod.
+  Stjärntryck submittar direkt (ingen kommentar krävs vid inskick); kommentar
+  läggs till efteråt via `PATCH /:id/comment` (samma "svårgissat UUID är
+  auktorisering nog"-mönster som `/google-click`).
 - `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/redeem
 - `src/routes/superadmin.js` - ultra-admin: CRUD på restauranger + drill-down-statistik
 - `src/lib/restaurantStats.js` - delad statistik/paginering (används av båda admin-rollerna)
@@ -83,14 +86,16 @@ innan de skriver publikt.
 
 ## Prioriterad roadmap (diskuterad med Jonas, inget påbörjat)
 
-1. **Lågbetygs-larm** (rekommenderad nästa feature): mejl/notis till ägaren
+1. ~~**Trimma gästflödet**~~ - KLART (2026-07-06): stjärntryck submittar
+   direkt (inget separat "Skicka"-klick), kommentaren är nu ett valfritt
+   efterföljande steg på resultatsidan via `PATCH /api/reviews/:id/comment`.
+   Verifierat i produktion.
+2. **Lågbetygs-larm** (rekommenderad nästa feature): mejl/notis till ägaren
    direkt vid 1-2-stjärnig recension. Säljargument: "fånga missnöjda gäster
    innan de skriver på Google". Kräver e-posttjänst (t.ex. Resend) +
    e-postkolumn på restaurants-tabellen.
-2. **Automatisk månadsrapport** till ägaren (antal recensioner, snitt,
+3. **Automatisk månadsrapport** till ägaren (antal recensioner, snitt,
    inlösta koder) - minskar churn, blir säljmaterial.
-3. **Trimma gästflödet**: vid högt betyg, visa Google-knappen direkt och gör
-   kommentaren valfri EFTERÅT (kommentar är mest värdefull vid låga betyg).
 4. **Engelska** som andraspråk på gästsidan (turister).
 5. **Branding per restaurang** (logga + accentfärg på gästsidan).
 6. **SMS-påminnelse** några timmar efter högt betyg för att slutföra
