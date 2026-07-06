@@ -20,4 +20,14 @@ const loginLimiter = rateLimit({
   message: { error: "För många inloggningsförsök, försök igen senare." },
 });
 
-module.exports = { reviewLimiter, loginLimiter };
+// Ännu strängare gräns för ultra-admin-inloggning eftersom den ger tillgång
+// till samtliga restauranger.
+const superAdminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "För många inloggningsförsök, försök igen senare." },
+});
+
+module.exports = { reviewLimiter, loginLimiter, superAdminLoginLimiter };

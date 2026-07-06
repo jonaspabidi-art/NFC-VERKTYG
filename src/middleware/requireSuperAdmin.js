@@ -1,9 +1,9 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config");
 
-// Verifierar admin-JWT:n och sätter req.restaurantId så varje route bara
-// någonsin kan läsa/skriva den inloggade restaurangens egen data.
-function requireAuth(req, res, next) {
+// Verifierar ultra-admin-JWT:n. Skiljs strikt från restaurang-JWT:n via
+// role-fältet, så ett restaurang-JWT aldrig kan användas här och tvärtom.
+function requireSuperAdmin(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) {
@@ -12,15 +12,13 @@ function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, config.jwtSecret);
-    if (!payload.restaurantId) {
-      return res.status(401).json({ error: "Inte inloggad som restaurang." });
+    if (payload.role !== "super_admin") {
+      return res.status(401).json({ error: "Inte inloggad som ultra-admin." });
     }
-    req.restaurantId = payload.restaurantId;
-    req.restaurantSlug = payload.slug;
     next();
   } catch (err) {
     return res.status(401).json({ error: "Ogiltig eller utgången session." });
   }
 }
 
-module.exports = requireAuth;
+module.exports = requireSuperAdmin;

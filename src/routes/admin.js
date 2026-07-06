@@ -39,6 +39,63 @@ router.post("/login", loginLimiter, async (req, res) => {
   res.json({ token, restaurantName: restaurant.name });
 });
 
+router.get("/settings", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select("discount_percent, discount_valid_days, high_rating_threshold")
+    .eq("id", req.restaurantId)
+    .single();
+
+  if (error) {
+    return res.status(500).json({ error: "Kunde inte hämta inställningar." });
+  }
+
+  res.json({
+    discountPercent: data.discount_percent,
+    discountValidDays: data.discount_valid_days,
+    highRatingThreshold: data.high_rating_threshold,
+  });
+});
+
+router.patch("/settings", requireAuth, async (req, res) => {
+  const { discountPercent, discountValidDays, highRatingThreshold } = req.body || {};
+
+  const percent = Number(discountPercent);
+  const validDays = Number(discountValidDays);
+  const threshold = Number(highRatingThreshold);
+
+  if (!Number.isInteger(percent) || percent < 0 || percent > 100) {
+    return res.status(400).json({ error: "Rabattprocent måste vara ett heltal mellan 0 och 100." });
+  }
+  if (!Number.isInteger(validDays) || validDays < 1 || validDays > 365) {
+    return res.status(400).json({ error: "Giltighetstid måste vara mellan 1 och 365 dagar." });
+  }
+  if (!Number.isInteger(threshold) || threshold < 1 || threshold > 5) {
+    return res.status(400).json({ error: "Betygströskel måste vara mellan 1 och 5." });
+  }
+
+  const { data, error } = await supabase
+    .from("restaurants")
+    .update({
+      discount_percent: percent,
+      discount_valid_days: validDays,
+      high_rating_threshold: threshold,
+    })
+    .eq("id", req.restaurantId)
+    .select("discount_percent, discount_valid_days, high_rating_threshold")
+    .single();
+
+  if (error) {
+    return res.status(500).json({ error: "Kunde inte spara inställningar." });
+  }
+
+  res.json({
+    discountPercent: data.discount_percent,
+    discountValidDays: data.discount_valid_days,
+    highRatingThreshold: data.high_rating_threshold,
+  });
+});
+
 router.get("/stats", requireAuth, async (req, res) => {
   const { data: reviews, error: reviewsError } = await supabase
     .from("reviews")

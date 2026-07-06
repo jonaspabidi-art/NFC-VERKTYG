@@ -7,15 +7,16 @@ const config = require("./config");
 const restaurantsRouter = require("./routes/restaurants");
 const reviewsRouter = require("./routes/reviews");
 const adminRouter = require("./routes/admin");
+const superadminRouter = require("./routes/superadmin");
 
 const app = express();
 
-app.set("trust proxy", 1); // Railway/liknande proxyar - behovs for korrekt req.ip
+app.set("trust proxy", 1); // Railway/liknande proxyar - behövs för korrekt req.ip
 
 app.use(
   helmet({
-    // Tillat inline <script>/<style> i vara egna statiska sidor utan att
-    // dra in en extern CSP-konfiguration for ett litet vanilla-JS-projekt.
+    // Tillåt inline <script>/<style> i våra egna statiska sidor utan att
+    // dra in en extern CSP-konfiguration för ett litet vanilla-JS-projekt.
     contentSecurityPolicy: false,
   })
 );
@@ -25,6 +26,7 @@ app.use(cookieParser());
 app.use("/api/restaurants", restaurantsRouter);
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/superadmin", superadminRouter);
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 
@@ -37,5 +39,5 @@ app.use((req, res) => {
 });
 
 app.listen(config.port, () => {
-  console.log(`Servern kor pa http://localhost:${config.port}`);
+  console.log(`Servern kör på http://localhost:${config.port}`);
 });

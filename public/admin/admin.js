@@ -143,6 +143,39 @@
       loadReviews(currentPage + 1);
     });
 
+    async function loadSettings() {
+      const res = await authedFetch("/api/admin/settings");
+      const settings = await res.json();
+
+      document.getElementById("setting-percent").value = settings.discountPercent;
+      document.getElementById("setting-valid-days").value = settings.discountValidDays;
+      document.getElementById("setting-threshold").value = settings.highRatingThreshold;
+    }
+
+    document.getElementById("save-settings-btn").addEventListener("click", async () => {
+      const messageEl = document.getElementById("settings-message");
+      messageEl.classList.add("hidden");
+
+      try {
+        const res = await authedFetch("/api/admin/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            discountPercent: Number(document.getElementById("setting-percent").value),
+            discountValidDays: Number(document.getElementById("setting-valid-days").value),
+            highRatingThreshold: Number(document.getElementById("setting-threshold").value),
+          }),
+        });
+        const data = await res.json();
+
+        messageEl.textContent = res.ok ? "Inställningarna sparades." : data.error || "Kunde inte spara.";
+        messageEl.classList.remove("hidden");
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+    });
+
     document.getElementById("redeem-btn").addEventListener("click", async () => {
       const codeInput = document.getElementById("redeem-code");
       const messageEl = document.getElementById("redeem-message");
@@ -172,5 +205,6 @@
 
     loadStats();
     loadReviews(1);
+    loadSettings();
   }
 })();

@@ -62,22 +62,46 @@ som använda) så adminvyns statistik går att se i verkligt bruk direkt.
    `PORT` sätts automatiskt av Railway.
 3. Starta-kommando: `npm start`.
 
-## Lägga till en ny restaurangkund
+## Ultra-admin (hantera alla restaurangkunder)
 
-Ingen kod behöver skrivas om. Lägg bara till en ny rad i `restaurants`-tabellen:
+Ett separat konto, bara för dig som driver plattformen, för att skapa och
+hantera restaurangkunder via ett UI istället för att köra SQL manuellt.
 
-1. Generera en lösenordshash:
+1. **Aktivera det**: generera en lösenordshash och sätt den som
+   `SUPER_ADMIN_PASSWORD_HASH` i din `.env` (lokalt) respektive Railways
+   miljövariabler (produktion):
    ```bash
-   npm run hash-password -- "restaurangens-onskade-losenord"
+   npm run hash-password -- "ditt-egna-losenord"
    ```
-2. Kör en INSERT i Supabase SQL Editor:
-   ```sql
-   insert into restaurants (slug, name, google_place_id, password_hash)
-   values ('ny-restaurang', 'Ny Restaurang AB', '<GOOGLE_PLACE_ID>', '<hash fran steg 1>');
-   ```
-3. Skriv en NFC-tagg som pekar mot `https://<din-domän>/review/index.html?r=ny-restaurang`
-   (se nästa avsnitt).
-4. Ägaren loggar in på `/admin/login.html` med slug `ny-restaurang` och sitt lösenord.
+   Om variabeln inte är satt är `/superadmin/login.html` avstängt (503).
+2. Logga in på `/superadmin/login.html` (bara lösenord, inget slug-fält).
+3. I dashboarden kan du:
+   - **Skapa en ny restaurang** (slug, namn, Google Place ID, lösenord till
+     restaurangens egen adminvy, samt rabattinställningar) - restaurangen kan
+     logga in direkt efteråt.
+   - **Redigera** namn, Google Place ID, rabattinställningar eller nollställa
+     lösenordet för valfri restaurang.
+   - **Ta bort** en restaurang (tar även bort dess recensioner/rabattkoder).
+4. Efter att en restaurang skapats: skriv en NFC-tagg som pekar mot
+   `https://<din-domän>/review/index.html?r=<slug>` (se nästa avsnitt), och
+   ge ägaren dess slug + lösenord för `/admin/login.html`.
+
+Restaurangägaren kan själv justera sina rabattinställningar (rabatt-%,
+giltighetstid, betygströskel) under "Inställningar" i sin egen adminvy -
+ultra-admin behövs bara för att skapa/ta bort restauranger eller nollställa
+ett glömt lösenord.
+
+### Alternativ: manuell SQL
+
+Fungerar fortfarande om du hellre vill slippa sätta upp ultra-admin-kontot:
+
+```bash
+npm run hash-password -- "restaurangens-onskade-losenord"
+```
+```sql
+insert into restaurants (slug, name, google_place_id, password_hash)
+values ('ny-restaurang', 'Ny Restaurang AB', '<GOOGLE_PLACE_ID>', '<hash fran steg 1>');
+```
 
 Valfria kolumner (`discount_percent`, `discount_valid_days`,
 `high_rating_threshold`) har rimliga standardvärden (10%, 30 dagar, betyg
@@ -124,9 +148,16 @@ personuppgifter i klartext.
 | POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
 | POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken |
 | POST  | `/api/admin/login`                          | Publik | Loggar in, returnerar JWT |
+| GET   | `/api/admin/settings`                       | JWT    | Restaurangens rabattinställningar |
+| PATCH | `/api/admin/settings`                       | JWT    | Uppdaterar rabattinställningar |
 | GET   | `/api/admin/stats`                          | JWT    | Statistik för inloggad restaurang |
 | GET   | `/api/admin/reviews`                        | JWT    | Paginerad recensionslista |
 | POST  | `/api/admin/discounts/:code/redeem`         | JWT    | Markerar en rabattkod som använd |
+| POST  | `/api/superadmin/login`                     | Publik | Ultra-admin-inloggning (bara lösenord) |
+| GET   | `/api/superadmin/restaurants`               | Ultra-JWT | Lista alla restauranger + statistik |
+| POST  | `/api/superadmin/restaurants`               | Ultra-JWT | Skapa en ny restaurang |
+| PATCH | `/api/superadmin/restaurants/:id`           | Ultra-JWT | Redigera valfri restaurang |
+| DELETE| `/api/superadmin/restaurants/:id`           | Ultra-JWT | Ta bort en restaurang |
 
 ## Kända begränsningar / vidareutveckling
 

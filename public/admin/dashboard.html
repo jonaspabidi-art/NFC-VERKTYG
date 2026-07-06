@@ -41,6 +41,24 @@
     </div>
 
     <div class="card">
+      <h3>Inställningar</h3>
+      <div class="field">
+        <label for="setting-percent">Rabatt (%)</label>
+        <input type="number" id="setting-percent" min="0" max="100" />
+      </div>
+      <div class="field">
+        <label for="setting-valid-days">Giltighetstid (dagar)</label>
+        <input type="number" id="setting-valid-days" min="1" max="365" />
+      </div>
+      <div class="field">
+        <label for="setting-threshold">Betyg som räknas som "högt" (1-5)</label>
+        <input type="number" id="setting-threshold" min="1" max="5" />
+      </div>
+      <button id="save-settings-btn">Spara inställningar</button>
+      <p id="settings-message" class="muted hidden"></p>
+    </div>
+
+    <div class="card">
       <h3>Lös in rabattkod</h3>
       <div class="redeem-row">
         <input type="text" id="redeem-code" placeholder="t.ex. BELLA-7K2P9" />
