@@ -220,9 +220,17 @@ upp en extra rabatt (`GOOGLE_BONUS_PERCENT` i `src/routes/reviews.js`,
 för närvarande 10 procentenheter utöver ordinarie rabatt) genom att dela
 recensionen på Google.
 
+- **Bekräftelse-SMS = gästens kvitto**: eftersom ingen rabattkod visas på
+  skärmen längre skickas ett bekräftelse-SMS så fort gästen sparar sitt
+  nummer ("Du har X% rabatt, giltig till Y, visa detta SMS i kassan") -
+  det är det som består efter att webbläsaren stängts. Låses bonusen upp
+  senare (via Google-klicket) skickas ett uppdaterings-SMS med den nya
+  procentsatsen, så gästens sparade SMS aldrig visar fel. SMS:et skickas
+  på gästens valda språk (frontend skickar med `lang` i anropen).
 - **Direkt bonus**: har gästen redan klickat på Google-länken innan de
   lämnar numret, läggs bonusen på omedelbart och procentsatsen på skärmen
-  uppdateras direkt - ingen SMS behövs.
+  uppdateras direkt - bekräftelse-SMS:et skickas då med den höjda procenten
+  från början.
 - **SMS-påminnelse**: har de inte klickat än, väntar systemet 15 minuter
   (`GOOGLE_BONUS_REMINDER_DELAY_MS`) och skickar då ett SMS med
   Google-länken, om de fortfarande inte klickat. Samma in-memory
@@ -243,6 +251,23 @@ recensionen på Google.
   skickas inga påminnelser - bonusen kan ändå låsas upp direkt vid klick,
   bara SMS-delen är avstängd. `ELKS_FROM` är valfri avsändare (nummer eller
   kort text); saknas den används 46elks standardavsändare.
+
+## Mejlmallar (HTML i gästsidans stil)
+
+Alla tre mejlutskick (lågbetygslarm, månadsrapport, gottgörelserabatt)
+skickas som HTML-mejl i samma visuella stil som gästsidan - ljus bakgrund,
+vitt kort med rundade hörn, guldaccent och Roboto/Arial. Byggda med
+inline-CSS och table-layout i `src/lib/emailAlerts.js` (mejlklienter
+stödjer inte externa stylesheets), med en delad `renderLayout`-wrapper.
+- En textversion skickas alltid med som fallback för klienter utan HTML.
+- Lågbetygslarmet visar betyget som stjärnor, kommentaren i en citatruta
+  och gästens kontaktuppgifter i en guldton-ruta med klickbara
+  mailto-/tel-länkar.
+- Månadsrapporten visar statistiken som kort + stapeldiagram för
+  betygsfördelningen.
+- Gottgörelsemejlet använder samma belöningsruta som gästsidan (procent +
+  "visa upp det här mejlet i kassan") - ingen kod visas längre, i linje
+  med att den digitala inlösningen är borttagen.
 
 ## Engelska på gästsidan
 
@@ -273,8 +298,9 @@ lågbetygslarmet till ägaren, precis som en eventuell kommentar.
   kort text om att uppgifterna delas med restaurangen om de lämnas.
 - Ägaren kan därefter, om de vill, trycka "Skicka gottgörelsekod" i sin
   adminvy (`/admin/dashboard.html`, recensionslistan) för att skicka en
-  rabattkod till just den gästen (mejlas automatiskt om gästen lämnat sin
-  e-post, annars visas koden i adminvyn för att läsas upp t.ex. i telefon).
+  rabatt till just den gästen (mejlas automatiskt om gästen lämnat sin
+  e-post - mejlet säger "visa upp det här mejlet i kassan"; annars ringer
+  ägaren upp och ger rabatten muntligt).
 - **Medvetet manuellt, inte automatiskt** - till skillnad från höga betyg
   genereras ingen kod automatiskt vid lågt betyg, för att undvika att någon
   avsiktligt ger lågt betyg för att utlösa en rabatt.

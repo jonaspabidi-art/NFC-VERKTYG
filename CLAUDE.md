@@ -49,9 +49,17 @@ innan de skriver publikt.
 - `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/gottgörelse
 - `src/routes/superadmin.js` - ultra-admin: CRUD på restauranger + drill-down-statistik
 - `src/lib/restaurantStats.js` - delad statistik/paginering (används av båda admin-rollerna)
-- `src/lib/emailAlerts.js` - `sendLowRatingAlert` + `sendMonthlyReport` via
-  Resends REST-API (fetch, ingen npm-dependency), delad `sendEmail`-helper,
-  no-op om `RESEND_API_KEY`/`owner_email` saknas
+- `src/lib/emailAlerts.js` - `sendLowRatingAlert` + `sendMonthlyReport` +
+  `sendRecoveryDiscountEmail` via Resends REST-API (fetch, ingen
+  npm-dependency), delad `sendEmail`-helper, no-op om
+  `RESEND_API_KEY`/`owner_email` saknas. Alla mejl skickas som HTML i
+  gästsidans ljusa stil (inline-CSS + table-layout, `renderLayout`-wrapper,
+  textversion som fallback) - håll nya mejl i samma mall.
+- `src/lib/smsAlerts.js` - 46elks-integration: `sendDiscountConfirmationSms`
+  (gästens bestående kvitto på rabatten, skickas när numret sparas),
+  `sendBonusUpdateSms` (när bonusen låses upp efteråt),
+  `sendGoogleBonusReminderSms` (15-min-påminnelsen). Alla sv/en via
+  `lang`-parameter som frontend skickar med. No-op om `ELKS_*` saknas.
 - `src/lib/monthlyReportScheduler.js` - periodisk koll (se beslut 9 nedan),
   startas från `src/index.js` vid serverstart
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
@@ -220,6 +228,13 @@ innan de skriver publikt.
      telefon/mejl istället för adminvyns kodruta) - se beslut 4 ovan.
      Fråga inte om att lägga tillbaka en synlig kod utan att Jonas tar
      upp det själv.
+   - **Persistensproblemet ("rabatten försvinner med skärmen") löstes
+     2026-07-06 med bekräftelse-SMS**: när gästen sparar sitt nummer
+     skickas ett SMS med procent + giltighetsdatum ("visa detta SMS i
+     kassan"), och ett uppdaterings-SMS om bonusen låses upp senare -
+     se `src/lib/smsAlerts.js`. Gäster som INTE lämnar nummer har
+     fortfarande inget bestående kvitto - känd kvarvarande lucka,
+     accepterad av Jonas tills vidare.
    - Ny avatar-fallback: saknas `logo_url` visas restaurangens initialer i
      en rund cirkel (`getInitials()` i `app.js`).
    - Gästens faktiska stjärnbetyg (inte alltid 5) renderas ovanför

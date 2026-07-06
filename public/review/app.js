@@ -32,6 +32,7 @@
       send: "Skicka",
       contactSuccess: "Tack, vi hör av oss!",
       phoneSuccessScheduled: "Tack! Vi påminner dig om du inte hunnit dela än.",
+      phoneSuccessSms: "Tack! Vi har skickat en bekräftelse på din rabatt via SMS.",
       phoneBonusUnlocked: "Grattis, din rabatt är uppdaterad!",
       genericServerError: "Kunde inte nå servern, försök igen.",
       genericError: "Något gick fel, försök igen.",
@@ -65,6 +66,7 @@
       send: "Send",
       contactSuccess: "Thanks, we'll be in touch!",
       phoneSuccessScheduled: "Thanks! We'll remind you if you haven't shared yet.",
+      phoneSuccessSms: "Thanks! We've sent a confirmation of your discount by SMS.",
       phoneBonusUnlocked: "Congrats, your discount has been updated!",
       genericServerError: "Could not reach the server, please try again.",
       genericError: "Something went wrong, please try again.",
@@ -271,7 +273,11 @@
         const googleLink = document.getElementById("google-link");
         googleLink.href = data.googleReviewUrl;
         googleLink.addEventListener("click", () => {
-          fetch(`/api/reviews/${data.reviewId}/google-click`, { method: "POST" })
+          fetch(`/api/reviews/${data.reviewId}/google-click`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lang: currentLang }),
+          })
             .then((r) => r.json())
             .then((clickData) => {
               if (clickData.bonusApplied) {
@@ -393,7 +399,7 @@
       const res = await fetch(`/api/reviews/${currentReviewId}/phone`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, lang: currentLang }),
       });
       const data = await res.json();
 
@@ -408,7 +414,7 @@
       if (data.bonusApplied) {
         showBonusUnlocked(data.discountPercent);
       } else {
-        message.textContent = t("phoneSuccessScheduled");
+        message.textContent = data.smsSent ? t("phoneSuccessSms") : t("phoneSuccessScheduled");
         message.classList.remove("hidden");
       }
     } catch (err) {
