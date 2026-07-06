@@ -26,6 +26,28 @@
   text-align: center;
 }
 
+.lang-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lang-toggle .lang-btn {
+  width: auto;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.lang-toggle .lang-btn.active {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
 .restaurant-logo {
   display: block;
   max-width: 160px;

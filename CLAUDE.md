@@ -147,7 +147,18 @@ innan de skriver publikt.
    `last_monthly_report_sent_at`-kolumnen kräver samma typ av separat
    migrering som `owner_email` gjorde (fråga om Jonas kört den innan du
    antar att schemaläggningen fungerar mot en riktig databas).
-4. **Engelska** som andraspråk på gästsidan (turister).
+4. ~~**Engelska**~~ - KLART (2026-07-06): SV/EN-toggle på gästsidan
+   (`public/review/`), inget externt översättningsbibliotek. Ordbok `I18N`
+   i `public/review/app.js`, tillämpad via `data-i18n`/
+   `data-i18n-placeholder`-attribut i `index.html`. Standardval styrs av
+   `navigator.language` (icke-svensk webbläsare = engelska, tänkt för
+   turister), gästens val sparas i `localStorage` (`rr_lang`).
+   Guest-endpointerna i `src/routes/reviews.js`/`restaurants.js` returnerar
+   nu ÄVEN en `code` (fel) eller `messageCode` (lyckade tack-svar) utöver
+   den svenska `error`/`message`-texten - lägg ALLTID till en `code` på nya
+   fel-svar på dessa två filer, annars visas bara den svenska texten som
+   fallback för engelska gäster. Admin-/ultra-admin-vyerna är fortfarande
+   enbart svenska, medvetet avgränsat.
 5. ~~**Branding per restaurang**~~ - KLART (2026-07-06): valfri `logo_url`
    (https-länk) och `accent_color` (hex) på `restaurants`, satta av
    restaurangen själv i `/admin/dashboard.html` eller av ultra-admin i

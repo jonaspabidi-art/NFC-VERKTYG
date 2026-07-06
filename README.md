@@ -244,6 +244,26 @@ recensionen på Google.
   bara SMS-delen är avstängd. `ELKS_FROM` är valfri avsändare (nummer eller
   kort text); saknas den används 46elks standardavsändare.
 
+## Engelska på gästsidan
+
+Gästsidan (`public/review/`) finns på svenska och engelska, för turister som
+scannar en NFC-tagg/QR-skylt.
+- Ett litet SV/EN-val högst upp på sidan. Ingen extern översättningstjänst -
+  bara en ordbok i `public/review/app.js` (`I18N`), tillämpad via
+  `data-i18n`/`data-i18n-placeholder`-attribut i `public/review/index.html`.
+- **Standardval**: `navigator.language` avgör - allt utom svenska webbläsare
+  får engelska som förval, eftersom det främst är till för turister. Gästens
+  val sparas i `localStorage` (`rr_lang`) så det består vid ett omladdning.
+- **Felmeddelanden och tack-texter från API:t** är också översatta: guest-
+  endpointerna i `src/routes/reviews.js`/`src/routes/restaurants.js`
+  returnerar en `code` (fel) eller `messageCode` (lyckade tack-svar) utöver
+  den svenska texten i `error`/`message` - frontend slår upp rätt språk via
+  `ERROR_MESSAGES` i `app.js` och faller tillbaka på den svenska texten om
+  koden saknas/är okänd, så inget går sönder om en kod glöms bort på en ny
+  endpoint.
+- Admin- och ultra-admin-vyerna (Jonas interna verktyg) är fortfarande bara
+  på svenska - medvetet avgränsat till gästflödet.
+
 ## Kontaktuppgifter vid lågt betyg + gottgörelsekod
 
 Efter ett lågt betyg kan gästen valfritt lämna e-post och/eller telefon om

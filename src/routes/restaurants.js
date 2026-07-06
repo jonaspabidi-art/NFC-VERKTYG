@@ -16,10 +16,10 @@ router.get("/:slug", async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Kunde inte hämta restaurang." });
+    return res.status(500).json({ error: "Kunde inte hämta restaurang.", code: "server_error" });
   }
   if (!data) {
-    return res.status(404).json({ error: "Restaurangen hittades inte." });
+    return res.status(404).json({ error: "Restaurangen hittades inte.", code: "restaurant_not_found" });
   }
 
   res.json({ id: data.id, name: data.name, logoUrl: data.logo_url, accentColor: data.accent_color });

@@ -115,7 +115,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
 
   const ratingNum = Number(rating);
   if (!restaurantSlug || !Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-    return res.status(400).json({ error: "Ogiltigt betyg eller restaurang." });
+    return res.status(400).json({ error: "Ogiltigt betyg eller restaurang.", code: "invalid_rating" });
   }
 
   const { data: restaurant, error: restaurantError } = await supabase
@@ -125,10 +125,10 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     .maybeSingle();
 
   if (restaurantError) {
-    return res.status(500).json({ error: "Kunde inte hämta restaurang." });
+    return res.status(500).json({ error: "Kunde inte hämta restaurang.", code: "server_error" });
   }
   if (!restaurant) {
-    return res.status(404).json({ error: "Restaurangen hittades inte." });
+    return res.status(404).json({ error: "Restaurangen hittades inte.", code: "restaurant_not_found" });
   }
 
   const cooldownSince = new Date(Date.now() - DEVICE_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString();
@@ -141,10 +141,12 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     .maybeSingle();
 
   if (recentError) {
-    return res.status(500).json({ error: "Kunde inte kontrollera tidigare recensioner." });
+    return res.status(500).json({ error: "Kunde inte kontrollera tidigare recensioner.", code: "server_error" });
   }
   if (recentReview) {
-    return res.status(429).json({ error: "Du har redan lämnat en recension nyligen. Tack!" });
+    return res
+      .status(429)
+      .json({ error: "Du har redan lämnat en recension nyligen. Tack!", code: "already_reviewed" });
   }
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
@@ -163,7 +165,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     .single();
 
   if (insertError) {
-    return res.status(500).json({ error: "Kunde inte spara recensionen." });
+    return res.status(500).json({ error: "Kunde inte spara recensionen.", code: "server_error" });
   }
 
   const isHighRating = ratingNum >= restaurant.high_rating_threshold;
@@ -174,6 +176,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
       status: "thanks",
       reviewId: review.id,
       message: "Tack för din feedback! Den går direkt till restaurangen.",
+      messageCode: "thanks_low",
     });
   }
 
@@ -195,6 +198,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
       status: "thanks",
       reviewId: review.id,
       message: "Tack för din recension!",
+      messageCode: "thanks_no_discount",
     });
   }
 
@@ -217,7 +221,7 @@ router.patch("/:id/comment", reviewLimiter, async (req, res) => {
   const { comment } = req.body || {};
 
   if (typeof comment !== "string" || comment.trim().length === 0) {
-    return res.status(400).json({ error: "Kommentaren kan inte vara tom." });
+    return res.status(400).json({ error: "Kommentaren kan inte vara tom.", code: "comment_empty" });
   }
 
   const { data, error } = await supabase
@@ -228,10 +232,10 @@ router.patch("/:id/comment", reviewLimiter, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Kunde inte spara kommentaren." });
+    return res.status(500).json({ error: "Kunde inte spara kommentaren.", code: "server_error" });
   }
   if (!data) {
-    return res.status(404).json({ error: "Recensionen hittades inte." });
+    return res.status(404).json({ error: "Recensionen hittades inte.", code: "review_not_found" });
   }
 
   res.json({ status: "ok" });
@@ -248,13 +252,13 @@ router.patch("/:id/contact", reviewLimiter, async (req, res) => {
   const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
 
   if (!trimmedEmail && !trimmedPhone) {
-    return res.status(400).json({ error: "Ange e-post eller telefonnummer." });
+    return res.status(400).json({ error: "Ange e-post eller telefonnummer.", code: "contact_required" });
   }
   if (trimmedEmail && !EMAIL_PATTERN.test(trimmedEmail)) {
-    return res.status(400).json({ error: "Ogiltig e-postadress." });
+    return res.status(400).json({ error: "Ogiltig e-postadress.", code: "invalid_email" });
   }
   if (trimmedPhone && (trimmedPhone.length < 6 || trimmedPhone.length > 30)) {
-    return res.status(400).json({ error: "Ogiltigt telefonnummer." });
+    return res.status(400).json({ error: "Ogiltigt telefonnummer.", code: "invalid_phone" });
   }
 
   const { data, error } = await supabase
@@ -268,10 +272,10 @@ router.patch("/:id/contact", reviewLimiter, async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Kunde inte spara kontaktuppgifterna." });
+    return res.status(500).json({ error: "Kunde inte spara kontaktuppgifterna.", code: "server_error" });
   }
   if (!data) {
-    return res.status(404).json({ error: "Recensionen hittades inte." });
+    return res.status(404).json({ error: "Recensionen hittades inte.", code: "review_not_found" });
   }
 
   res.json({ status: "ok" });
@@ -287,7 +291,7 @@ router.patch("/:id/phone", reviewLimiter, async (req, res) => {
 
   const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
   if (!trimmedPhone || trimmedPhone.length < 6 || trimmedPhone.length > 30) {
-    return res.status(400).json({ error: "Ange ett giltigt telefonnummer." });
+    return res.status(400).json({ error: "Ange ett giltigt telefonnummer.", code: "invalid_phone" });
   }
 
   const { data: review, error: reviewError } = await supabase
@@ -298,10 +302,10 @@ router.patch("/:id/phone", reviewLimiter, async (req, res) => {
     .maybeSingle();
 
   if (reviewError) {
-    return res.status(500).json({ error: "Kunde inte spara telefonnumret." });
+    return res.status(500).json({ error: "Kunde inte spara telefonnumret.", code: "server_error" });
   }
   if (!review) {
-    return res.status(404).json({ error: "Recensionen hittades inte." });
+    return res.status(404).json({ error: "Recensionen hittades inte.", code: "review_not_found" });
   }
 
   if (review.clicked_google) {
@@ -338,10 +342,10 @@ router.post("/:id/google-click", async (req, res) => {
     .maybeSingle();
 
   if (error) {
-    return res.status(500).json({ error: "Kunde inte registrera klicket." });
+    return res.status(500).json({ error: "Kunde inte registrera klicket.", code: "server_error" });
   }
   if (!review) {
-    return res.status(404).json({ error: "Recensionen hittades inte." });
+    return res.status(404).json({ error: "Recensionen hittades inte.", code: "review_not_found" });
   }
 
   if (review.reminder_phone) {
