@@ -75,6 +75,8 @@ alter table restaurants add column if not exists owner_email text;
 alter table restaurants add column if not exists last_monthly_report_sent_at timestamptz;
 alter table reviews add column if not exists contact_email text;
 alter table reviews add column if not exists contact_phone text;
+alter table restaurants add column if not exists logo_url text;
+alter table restaurants add column if not exists accent_color text;
 ```
 
 ## Ultra-admin (hantera alla restaurangkunder)
@@ -222,11 +224,27 @@ lågbetygslarmet till ägaren, precis som en eventuell kommentar.
   genereras ingen kod automatiskt vid lågt betyg, för att undvika att någon
   avsiktligt ger lågt betyg för att utlösa en rabatt.
 
+## Branding per restaurang (logga + accentfärg)
+
+Gästsidan kan visas i restaurangens egen stil istället för det generella
+mörka/guld-temat:
+- **Logga**: en https-länk till en bild, visas ovanför restaurangnamnet.
+  Restaurangen behöver hosta bilden själv (t.ex. sin egen hemsida eller ett
+  bildhotell) - appen har ingen egen filuppladdning i v1.
+- **Accentfärg**: en hex-färg (t.ex. `#c0392b`) som ersätter standardguldet
+  på stjärnor, knappar och rabattboxen på just den restaurangens gästsida.
+  Admin- och ultra-admin-vyerna behåller alltid standardtemat.
+- Båda är helt valfria och sätts under "Inställningar" i
+  `/admin/dashboard.html`, eller av ultra-admin vid skapande/redigering i
+  `/superadmin/dashboard.html`. Tomt/ogiltigt värde = standardtemat används.
+- Om loggans URL inte går att ladda (trasig länk) döljs bilden tyst istället
+  för att visa en trasig bild-ikon.
+
 ## API-översikt
 
 | Metod | Endpoint                                   | Auth   | Beskrivning |
 |-------|---------------------------------------------|--------|-------------|
-| GET   | `/api/restaurants/:slug`                    | Publik | Restaurangnamn för review-sidan |
+| GET   | `/api/restaurants/:slug`                    | Publik | Restaurangnamn + branding (logga/accentfärg) för review-sidan |
 | POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
 | PATCH | `/api/reviews/:id/comment`                  | Publik | Lägger till/uppdaterar kommentaren i efterhand |
 | PATCH | `/api/reviews/:id/contact`                  | Publik | Lämnar valfria kontaktuppgifter (lågt betyg) |

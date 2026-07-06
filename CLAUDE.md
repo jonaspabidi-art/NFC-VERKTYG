@@ -141,7 +141,15 @@ innan de skriver publikt.
    migrering som `owner_email` gjorde (fråga om Jonas kört den innan du
    antar att schemaläggningen fungerar mot en riktig databas).
 4. **Engelska** som andraspråk på gästsidan (turister).
-5. **Branding per restaurang** (logga + accentfärg på gästsidan).
+5. ~~**Branding per restaurang**~~ - KLART (2026-07-06): valfri `logo_url`
+   (https-länk) och `accent_color` (hex) på `restaurants`, satta av
+   restaurangen själv i `/admin/dashboard.html` eller av ultra-admin i
+   `/superadmin/dashboard.html`. Gästsidan (`public/review/app.js`,
+   `applyBranding()`) visar loggan och sätter `--gold`/`--gold-soft` via
+   inline CSS-variabler - påverkar bara den enskilda restaurangens gästsida,
+   ALDRIG admin-/ultra-admin-temat. Trasig loggo-URL döljs tyst (ingen
+   trasig bild-ikon). `logo_url`/`accent_color`-kolumnerna kräver samma typ
+   av separat migrering som tidigare kolumner.
 6. **SMS-påminnelse** några timmar efter högt betyg för att slutföra
    Google-recensionen - diskuterad och medvetet parkerad (PII/GDPR + kostnad,
    opt-in-fält efter inskickat betyg). Jonas tror på den för konvertering.

@@ -43,11 +43,13 @@ router.post("/login", loginLimiter, async (req, res) => {
 });
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const URL_PATTERN = /^https:\/\/.+/;
 
 router.get("/settings", requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from("restaurants")
-    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email")
+    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email, logo_url, accent_color")
     .eq("id", req.restaurantId)
     .single();
 
@@ -60,11 +62,14 @@ router.get("/settings", requireAuth, async (req, res) => {
     discountValidDays: data.discount_valid_days,
     highRatingThreshold: data.high_rating_threshold,
     ownerEmail: data.owner_email,
+    logoUrl: data.logo_url,
+    accentColor: data.accent_color,
   });
 });
 
 router.patch("/settings", requireAuth, async (req, res) => {
-  const { discountPercent, discountValidDays, highRatingThreshold, ownerEmail } = req.body || {};
+  const { discountPercent, discountValidDays, highRatingThreshold, ownerEmail, logoUrl, accentColor } =
+    req.body || {};
 
   const percent = Number(discountPercent);
   const validDays = Number(discountValidDays);
@@ -82,6 +87,12 @@ router.patch("/settings", requireAuth, async (req, res) => {
   if (ownerEmail && !EMAIL_PATTERN.test(ownerEmail)) {
     return res.status(400).json({ error: "Ogiltig e-postadress." });
   }
+  if (logoUrl && !URL_PATTERN.test(logoUrl)) {
+    return res.status(400).json({ error: "Logga måste vara en https-länk." });
+  }
+  if (accentColor && !HEX_COLOR_PATTERN.test(accentColor)) {
+    return res.status(400).json({ error: "Accentfärg måste vara en hex-kod, t.ex. #d4af37." });
+  }
 
   const { data, error } = await supabase
     .from("restaurants")
@@ -90,9 +101,11 @@ router.patch("/settings", requireAuth, async (req, res) => {
       discount_valid_days: validDays,
       high_rating_threshold: threshold,
       owner_email: ownerEmail || null,
+      logo_url: logoUrl || null,
+      accent_color: accentColor || null,
     })
     .eq("id", req.restaurantId)
-    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email")
+    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email, logo_url, accent_color")
     .single();
 
   if (error) {
@@ -104,6 +117,8 @@ router.patch("/settings", requireAuth, async (req, res) => {
     discountValidDays: data.discount_valid_days,
     highRatingThreshold: data.high_rating_threshold,
     ownerEmail: data.owner_email,
+    logoUrl: data.logo_url,
+    accentColor: data.accent_color,
   });
 });
 

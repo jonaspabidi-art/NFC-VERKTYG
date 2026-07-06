@@ -12,8 +12,10 @@ const router = express.Router();
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const URL_PATTERN = /^https:\/\/.+/;
 
-function validateSettings({ discountPercent, discountValidDays, highRatingThreshold }) {
+function validateSettings({ discountPercent, discountValidDays, highRatingThreshold, logoUrl, accentColor }) {
   if (discountPercent !== undefined) {
     const value = Number(discountPercent);
     if (!Number.isInteger(value) || value < 0 || value > 100) {
@@ -31,6 +33,12 @@ function validateSettings({ discountPercent, discountValidDays, highRatingThresh
     if (!Number.isInteger(value) || value < 1 || value > 5) {
       return "Betygströskel måste vara mellan 1 och 5.";
     }
+  }
+  if (logoUrl && !URL_PATTERN.test(logoUrl)) {
+    return "Logga måste vara en https-länk.";
+  }
+  if (accentColor && !HEX_COLOR_PATTERN.test(accentColor)) {
+    return "Accentfärg måste vara en hex-kod, t.ex. #d4af37.";
   }
   return null;
 }
@@ -58,7 +66,7 @@ router.get("/restaurants", requireSuperAdmin, async (req, res) => {
   const { data: restaurants, error: restaurantsError } = await supabase
     .from("restaurants")
     .select(
-      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email, created_at"
+      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email, logo_url, accent_color, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -91,6 +99,8 @@ router.get("/restaurants", requireSuperAdmin, async (req, res) => {
       discountValidDays: restaurant.discount_valid_days,
       highRatingThreshold: restaurant.high_rating_threshold,
       ownerEmail: restaurant.owner_email,
+      logoUrl: restaurant.logo_url,
+      accentColor: restaurant.accent_color,
       createdAt: restaurant.created_at,
       totalReviews: stats.count,
       averageRating: stats.count > 0 ? Math.round((stats.sum / stats.count) * 100) / 100 : 0,
@@ -163,6 +173,8 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
     discountValidDays,
     highRatingThreshold,
     ownerEmail,
+    logoUrl,
+    accentColor,
   } = req.body || {};
 
   if (!slug || !SLUG_PATTERN.test(slug)) {
@@ -178,7 +190,13 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
     return res.status(400).json({ error: "Ogiltig e-postadress." });
   }
 
-  const settingsError = validateSettings({ discountPercent, discountValidDays, highRatingThreshold });
+  const settingsError = validateSettings({
+    discountPercent,
+    discountValidDays,
+    highRatingThreshold,
+    logoUrl,
+    accentColor,
+  });
   if (settingsError) {
     return res.status(400).json({ error: settingsError });
   }
@@ -196,6 +214,8 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
       ...(discountValidDays !== undefined && { discount_valid_days: Number(discountValidDays) }),
       ...(highRatingThreshold !== undefined && { high_rating_threshold: Number(highRatingThreshold) }),
       ...(ownerEmail !== undefined && { owner_email: ownerEmail || null }),
+      ...(logoUrl !== undefined && { logo_url: logoUrl || null }),
+      ...(accentColor !== undefined && { accent_color: accentColor || null }),
     })
     .select("id, slug, name")
     .single();
@@ -212,10 +232,25 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
 
 router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, googlePlaceId, password, discountPercent, discountValidDays, highRatingThreshold, ownerEmail } =
-    req.body || {};
+  const {
+    name,
+    googlePlaceId,
+    password,
+    discountPercent,
+    discountValidDays,
+    highRatingThreshold,
+    ownerEmail,
+    logoUrl,
+    accentColor,
+  } = req.body || {};
 
-  const settingsError = validateSettings({ discountPercent, discountValidDays, highRatingThreshold });
+  const settingsError = validateSettings({
+    discountPercent,
+    discountValidDays,
+    highRatingThreshold,
+    logoUrl,
+    accentColor,
+  });
   if (settingsError) {
     return res.status(400).json({ error: settingsError });
   }
@@ -233,6 +268,8 @@ router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
     ...(discountValidDays !== undefined && { discount_valid_days: Number(discountValidDays) }),
     ...(highRatingThreshold !== undefined && { high_rating_threshold: Number(highRatingThreshold) }),
     ...(ownerEmail !== undefined && { owner_email: ownerEmail || null }),
+    ...(logoUrl !== undefined && { logo_url: logoUrl || null }),
+    ...(accentColor !== undefined && { accent_color: accentColor || null }),
   };
   if (password) {
     updates.password_hash = await bcrypt.hash(password, 10);
@@ -247,7 +284,7 @@ router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
     .update(updates)
     .eq("id", id)
     .select(
-      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email"
+      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email, logo_url, accent_color"
     )
     .maybeSingle();
 

@@ -26,6 +26,13 @@
   text-align: center;
 }
 
+.restaurant-logo {
+  display: block;
+  max-width: 160px;
+  max-height: 80px;
+  margin: 0 auto 16px;
+}
+
 .comment-followup {
   margin-top: 24px;
   padding-top: 20px;

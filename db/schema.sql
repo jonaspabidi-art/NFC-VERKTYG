@@ -13,6 +13,8 @@ create table if not exists restaurants (
   high_rating_threshold smallint not null default 4, -- rating >= detta räknas som "högt" betyg
   owner_email text, -- valfri: dit lågbetygslarm/månadsrapport skickas, ingen alert om null
   last_monthly_report_sent_at timestamptz, -- null = aldrig skickad
+  logo_url text, -- valfri: visas på gästsidan istället för/ovanför namnet
+  accent_color text, -- valfri hex-färg (t.ex. #d4af37), ersätter guldtemat på gästsidan
   created_at timestamptz not null default now()
 );
 

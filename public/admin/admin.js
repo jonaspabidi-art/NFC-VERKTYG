@@ -189,6 +189,8 @@
       document.getElementById("setting-valid-days").value = settings.discountValidDays;
       document.getElementById("setting-threshold").value = settings.highRatingThreshold;
       document.getElementById("setting-owner-email").value = settings.ownerEmail || "";
+      document.getElementById("setting-logo-url").value = settings.logoUrl || "";
+      document.getElementById("setting-accent-color").value = settings.accentColor || "#d4af37";
     }
 
     document.getElementById("save-settings-btn").addEventListener("click", async () => {
@@ -204,6 +206,8 @@
             discountValidDays: Number(document.getElementById("setting-valid-days").value),
             highRatingThreshold: Number(document.getElementById("setting-threshold").value),
             ownerEmail: document.getElementById("setting-owner-email").value.trim(),
+            logoUrl: document.getElementById("setting-logo-url").value.trim(),
+            accentColor: document.getElementById("setting-accent-color").value,
           }),
         });
         const data = await res.json();

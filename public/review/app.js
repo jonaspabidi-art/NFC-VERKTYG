@@ -23,6 +23,26 @@
   const formError = document.getElementById("form-error");
   let currentReviewId = null;
 
+  const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+  function applyBranding(restaurant) {
+    if (restaurant.logoUrl) {
+      const logo = document.getElementById("restaurant-logo");
+      logo.addEventListener("error", () => logo.classList.add("hidden"));
+      logo.src = restaurant.logoUrl;
+      logo.classList.remove("hidden");
+    }
+
+    if (restaurant.accentColor && HEX_COLOR_PATTERN.test(restaurant.accentColor)) {
+      const root = document.documentElement.style;
+      root.setProperty("--gold", restaurant.accentColor);
+      const r = parseInt(restaurant.accentColor.slice(1, 3), 16);
+      const g = parseInt(restaurant.accentColor.slice(3, 5), 16);
+      const b = parseInt(restaurant.accentColor.slice(5, 7), 16);
+      root.setProperty("--gold-soft", `rgba(${r}, ${g}, ${b}, 0.15)`);
+    }
+  }
+
   fetch(`/api/restaurants/${encodeURIComponent(slug)}`)
     .then((res) => {
       if (!res.ok) throw new Error("not-found");
@@ -30,6 +50,7 @@
     })
     .then((restaurant) => {
       document.getElementById("restaurant-name").textContent = restaurant.name;
+      applyBranding(restaurant);
       show(formEl);
     })
     .catch(() => {

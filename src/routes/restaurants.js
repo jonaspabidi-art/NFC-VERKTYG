@@ -11,7 +11,7 @@ router.get("/:slug", async (req, res) => {
 
   const { data, error } = await supabase
     .from("restaurants")
-    .select("id, name")
+    .select("id, name, logo_url, accent_color")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -22,7 +22,7 @@ router.get("/:slug", async (req, res) => {
     return res.status(404).json({ error: "Restaurangen hittades inte." });
   }
 
-  res.json(data);
+  res.json({ id: data.id, name: data.name, logoUrl: data.logo_url, accentColor: data.accent_color });
 });
 
 module.exports = router;
