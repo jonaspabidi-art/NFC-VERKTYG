@@ -18,4 +18,10 @@ module.exports = {
   deviceIdCookieName: process.env.DEVICE_ID_COOKIE_NAME || "rr_device_id",
   // Valfri: om den inte är satt är ultra-admin-inloggning helt avstängd.
   superAdminPasswordHash: process.env.SUPER_ADMIN_PASSWORD_HASH || null,
+  // Valfri: om den inte är satt skickas inga lågbetygslarm (bara loggas).
+  resendApiKey: process.env.RESEND_API_KEY || null,
+  resendFromEmail: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+  // Valfri: din publika URL (utan avslutande /), t.ex. https://mitt-namn.up.railway.app.
+  // Används bara för att lägga en länk till adminvyn i larmmejlet.
+  appBaseUrl: process.env.APP_BASE_URL || null,
 };

@@ -150,6 +150,7 @@
       document.getElementById("setting-percent").value = settings.discountPercent;
       document.getElementById("setting-valid-days").value = settings.discountValidDays;
       document.getElementById("setting-threshold").value = settings.highRatingThreshold;
+      document.getElementById("setting-owner-email").value = settings.ownerEmail || "";
     }
 
     document.getElementById("save-settings-btn").addEventListener("click", async () => {
@@ -164,6 +165,7 @@
             discountPercent: Number(document.getElementById("setting-percent").value),
             discountValidDays: Number(document.getElementById("setting-valid-days").value),
             highRatingThreshold: Number(document.getElementById("setting-threshold").value),
+            ownerEmail: document.getElementById("setting-owner-email").value.trim(),
           }),
         });
         const data = await res.json();

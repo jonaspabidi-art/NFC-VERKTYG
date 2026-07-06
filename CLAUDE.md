@@ -26,6 +26,8 @@ innan de skriver publikt.
 - Railway-miljövariabler: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
   `JWT_SECRET`, `IP_HASH_SALT`, `SUPER_ADMIN_PASSWORD_HASH`,
   `DEVICE_ID_COOKIE_NAME`, `NODE_ENV=production`. `PORT` sätts av Railway.
+  Valfria: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `APP_BASE_URL` (styr
+  lågbetygslarmet, se nedan - saknas de skickas bara inga larm, inget fel).
 
 ## Inloggningar
 
@@ -47,6 +49,8 @@ innan de skriver publikt.
 - `src/routes/admin.js` - restaurangens login/stats/reviews/inställningar/redeem
 - `src/routes/superadmin.js` - ultra-admin: CRUD på restauranger + drill-down-statistik
 - `src/lib/restaurantStats.js` - delad statistik/paginering (används av båda admin-rollerna)
+- `src/lib/emailAlerts.js` - `sendLowRatingAlert` via Resends REST-API (fetch,
+  ingen npm-dependency), no-op om `RESEND_API_KEY`/`owner_email` saknas
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
   `requireSuperAdmin` (kräver `role: "super_admin"`), `deviceId` (cookie),
   `rateLimiters`
@@ -74,6 +78,12 @@ innan de skriver publikt.
    avvisas, superadmin kräver `role === "super_admin"`. Testa alltid
    isoleringen i BÅDA riktningarna om auth ändras.
 7. **IP:n lagras aldrig i klartext** - bara saltad SHA-256 (`IP_HASH_SALT`).
+8. **Lågbetygslarmet fördröjs 2 minuter** (`LOW_RATING_ALERT_DELAY_MS` i
+   `src/routes/reviews.js`) via in-memory `setTimeout`, INTE en riktig kö -
+   fångar upp en kommentar tillagd efteråt (`PATCH /:id/comment`) innan
+   mejlet skickas, men förloras om servern startar om/omdeployas under
+   fördröjningen. Medvetet accepterad begränsning för v1 - flytta till en
+   riktig kö (t.ex. en `scheduled_at`-kolumn + cron) om det blir ett problem.
 
 ## Hårda krav från Jonas
 
@@ -90,10 +100,15 @@ innan de skriver publikt.
    direkt (inget separat "Skicka"-klick), kommentaren är nu ett valfritt
    efterföljande steg på resultatsidan via `PATCH /api/reviews/:id/comment`.
    Verifierat i produktion.
-2. **Lågbetygs-larm** (rekommenderad nästa feature): mejl/notis till ägaren
-   direkt vid 1-2-stjärnig recension. Säljargument: "fånga missnöjda gäster
-   innan de skriver på Google". Kräver e-posttjänst (t.ex. Resend) +
-   e-postkolumn på restaurants-tabellen.
+2. ~~**Lågbetygs-larm**~~ - KLART (2026-07-06): mejl via Resend till
+   `restaurants.owner_email` vid betyg under tröskeln, 2 min fördröjning för
+   att hinna fånga en efterhandskommentar (se beslut 8 ovan). Restaurangen
+   sätter sin egen larm-e-post i Inställningar, ultra-admin kan sätta den vid
+   skapande/redigering. Kräver `RESEND_API_KEY` satt för att faktiskt skicka -
+   INTE verifierat mot en riktig Resend-leverans i produktion än (Jonas
+   behöver skapa Resend-konto och ge en API-nyckel, sätta den i Railway, samt
+   köra `alter table restaurants add column if not exists owner_email text;`
+   i Supabase eftersom kolumnen tillkom efter första schema-körningen).
 3. **Automatisk månadsrapport** till ägaren (antal recensioner, snitt,
    inlösta koder) - minskar churn, blir säljmaterial.
 4. **Engelska** som andraspråk på gästsidan (turister).

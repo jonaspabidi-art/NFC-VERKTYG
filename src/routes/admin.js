@@ -40,10 +40,12 @@ router.post("/login", loginLimiter, async (req, res) => {
   res.json({ token, restaurantName: restaurant.name });
 });
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 router.get("/settings", requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from("restaurants")
-    .select("discount_percent, discount_valid_days, high_rating_threshold")
+    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email")
     .eq("id", req.restaurantId)
     .single();
 
@@ -55,11 +57,12 @@ router.get("/settings", requireAuth, async (req, res) => {
     discountPercent: data.discount_percent,
     discountValidDays: data.discount_valid_days,
     highRatingThreshold: data.high_rating_threshold,
+    ownerEmail: data.owner_email,
   });
 });
 
 router.patch("/settings", requireAuth, async (req, res) => {
-  const { discountPercent, discountValidDays, highRatingThreshold } = req.body || {};
+  const { discountPercent, discountValidDays, highRatingThreshold, ownerEmail } = req.body || {};
 
   const percent = Number(discountPercent);
   const validDays = Number(discountValidDays);
@@ -74,6 +77,9 @@ router.patch("/settings", requireAuth, async (req, res) => {
   if (!Number.isInteger(threshold) || threshold < 1 || threshold > 5) {
     return res.status(400).json({ error: "Betygströskel måste vara mellan 1 och 5." });
   }
+  if (ownerEmail && !EMAIL_PATTERN.test(ownerEmail)) {
+    return res.status(400).json({ error: "Ogiltig e-postadress." });
+  }
 
   const { data, error } = await supabase
     .from("restaurants")
@@ -81,9 +87,10 @@ router.patch("/settings", requireAuth, async (req, res) => {
       discount_percent: percent,
       discount_valid_days: validDays,
       high_rating_threshold: threshold,
+      owner_email: ownerEmail || null,
     })
     .eq("id", req.restaurantId)
-    .select("discount_percent, discount_valid_days, high_rating_threshold")
+    .select("discount_percent, discount_valid_days, high_rating_threshold, owner_email")
     .single();
 
   if (error) {
@@ -94,6 +101,7 @@ router.patch("/settings", requireAuth, async (req, res) => {
     discountPercent: data.discount_percent,
     discountValidDays: data.discount_valid_days,
     highRatingThreshold: data.high_rating_threshold,
+    ownerEmail: data.owner_email,
   });
 });
 

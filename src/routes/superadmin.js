@@ -10,6 +10,7 @@ const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantS
 const router = express.Router();
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateSettings({ discountPercent, discountValidDays, highRatingThreshold }) {
   if (discountPercent !== undefined) {
@@ -55,7 +56,9 @@ router.post("/login", superAdminLoginLimiter, async (req, res) => {
 router.get("/restaurants", requireSuperAdmin, async (req, res) => {
   const { data: restaurants, error: restaurantsError } = await supabase
     .from("restaurants")
-    .select("id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, created_at")
+    .select(
+      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email, created_at"
+    )
     .order("created_at", { ascending: false });
 
   if (restaurantsError) {
@@ -86,6 +89,7 @@ router.get("/restaurants", requireSuperAdmin, async (req, res) => {
       discountPercent: restaurant.discount_percent,
       discountValidDays: restaurant.discount_valid_days,
       highRatingThreshold: restaurant.high_rating_threshold,
+      ownerEmail: restaurant.owner_email,
       createdAt: restaurant.created_at,
       totalReviews: stats.count,
       averageRating: stats.count > 0 ? Math.round((stats.sum / stats.count) * 100) / 100 : 0,
@@ -123,6 +127,7 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
     discountPercent,
     discountValidDays,
     highRatingThreshold,
+    ownerEmail,
   } = req.body || {};
 
   if (!slug || !SLUG_PATTERN.test(slug)) {
@@ -133,6 +138,9 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
   }
   if (password.length < 6) {
     return res.status(400).json({ error: "Lösenordet måste vara minst 6 tecken." });
+  }
+  if (ownerEmail && !EMAIL_PATTERN.test(ownerEmail)) {
+    return res.status(400).json({ error: "Ogiltig e-postadress." });
   }
 
   const settingsError = validateSettings({ discountPercent, discountValidDays, highRatingThreshold });
@@ -152,6 +160,7 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
       ...(discountPercent !== undefined && { discount_percent: Number(discountPercent) }),
       ...(discountValidDays !== undefined && { discount_valid_days: Number(discountValidDays) }),
       ...(highRatingThreshold !== undefined && { high_rating_threshold: Number(highRatingThreshold) }),
+      ...(ownerEmail !== undefined && { owner_email: ownerEmail || null }),
     })
     .select("id, slug, name")
     .single();
@@ -168,7 +177,8 @@ router.post("/restaurants", requireSuperAdmin, async (req, res) => {
 
 router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, googlePlaceId, password, discountPercent, discountValidDays, highRatingThreshold } = req.body || {};
+  const { name, googlePlaceId, password, discountPercent, discountValidDays, highRatingThreshold, ownerEmail } =
+    req.body || {};
 
   const settingsError = validateSettings({ discountPercent, discountValidDays, highRatingThreshold });
   if (settingsError) {
@@ -177,6 +187,9 @@ router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
   if (password !== undefined && password.length < 6) {
     return res.status(400).json({ error: "Lösenordet måste vara minst 6 tecken." });
   }
+  if (ownerEmail && !EMAIL_PATTERN.test(ownerEmail)) {
+    return res.status(400).json({ error: "Ogiltig e-postadress." });
+  }
 
   const updates = {
     ...(name !== undefined && { name }),
@@ -184,6 +197,7 @@ router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
     ...(discountPercent !== undefined && { discount_percent: Number(discountPercent) }),
     ...(discountValidDays !== undefined && { discount_valid_days: Number(discountValidDays) }),
     ...(highRatingThreshold !== undefined && { high_rating_threshold: Number(highRatingThreshold) }),
+    ...(ownerEmail !== undefined && { owner_email: ownerEmail || null }),
   };
   if (password) {
     updates.password_hash = await bcrypt.hash(password, 10);
@@ -197,7 +211,9 @@ router.patch("/restaurants/:id", requireSuperAdmin, async (req, res) => {
     .from("restaurants")
     .update(updates)
     .eq("id", id)
-    .select("id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold")
+    .select(
+      "id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email"
+    )
     .maybeSingle();
 
   if (error) {

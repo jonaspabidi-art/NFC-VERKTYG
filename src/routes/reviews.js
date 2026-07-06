@@ -2,12 +2,38 @@ const express = require("express");
 const supabase = require("../lib/supabaseClient");
 const { hashIp } = require("../lib/hash");
 const { generateDiscountCode } = require("../lib/discountCode");
+const { sendLowRatingAlert } = require("../lib/emailAlerts");
 const deviceId = require("../middleware/deviceId");
 const { reviewLimiter } = require("../middleware/rateLimiters");
 
 const router = express.Router();
 
 const DEVICE_COOLDOWN_HOURS = 24;
+// Ger gästen tid att lägga till en kommentar (PATCH /:id/comment) på
+// resultatsidan innan larmet går iväg, så ägaren oftast får texten också.
+const LOW_RATING_ALERT_DELAY_MS = 2 * 60 * 1000;
+
+// In-memory fördröjning - ett schemalagt larm förloras vid omstart/redeploy.
+// Accepterad avvägning för v1 (samma nivå som övriga enkla lösningar här).
+function scheduleLowRatingAlert(restaurant, reviewId) {
+  if (!restaurant.owner_email) return;
+
+  setTimeout(async () => {
+    try {
+      const { data: freshReview } = await supabase
+        .from("reviews")
+        .select("rating, comment, created_at")
+        .eq("id", reviewId)
+        .maybeSingle();
+
+      if (freshReview) {
+        await sendLowRatingAlert(restaurant, freshReview);
+      }
+    } catch (err) {
+      console.error(`Kunde inte skicka lågbetygslarm för ${restaurant.slug}:`, err.message);
+    }
+  }, LOW_RATING_ALERT_DELAY_MS);
+}
 
 router.post("/", deviceId, reviewLimiter, async (req, res) => {
   const { restaurantSlug, rating, comment, website } = req.body || {};
@@ -25,7 +51,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
 
   const { data: restaurant, error: restaurantError } = await supabase
     .from("restaurants")
-    .select("id, slug, google_place_id, discount_percent, discount_valid_days, high_rating_threshold")
+    .select("id, slug, name, google_place_id, discount_percent, discount_valid_days, high_rating_threshold, owner_email")
     .eq("slug", restaurantSlug)
     .maybeSingle();
 
@@ -73,6 +99,8 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
 
   const isHighRating = ratingNum >= restaurant.high_rating_threshold;
   if (!isHighRating) {
+    scheduleLowRatingAlert(restaurant, review.id);
+
     return res.json({
       status: "thanks",
       reviewId: review.id,

@@ -44,6 +44,10 @@
         <label for="new-threshold">Betyg som räknas som "högt" (1-5)</label>
         <input type="number" id="new-threshold" value="4" min="1" max="5" />
       </div>
+      <div class="field">
+        <label for="new-owner-email">Larm-e-post (ägare, valfritt)</label>
+        <input type="email" id="new-owner-email" placeholder="agare@example.se" />
+      </div>
       <button id="create-btn">Skapa restaurang</button>
       <p id="create-message" class="muted hidden"></p>
     </div>
@@ -111,6 +115,10 @@
       <div class="field">
         <label for="edit-threshold">Betyg som räknas som "högt" (1-5)</label>
         <input type="number" id="edit-threshold" min="1" max="5" />
+      </div>
+      <div class="field">
+        <label for="edit-owner-email">Larm-e-post (ägare, valfritt)</label>
+        <input type="email" id="edit-owner-email" placeholder="agare@example.se" />
       </div>
       <button id="save-edit-btn">Spara ändringar</button>
       <button id="cancel-edit-btn" class="secondary">Avbryt</button>

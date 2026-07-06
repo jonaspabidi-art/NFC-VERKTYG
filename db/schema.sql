@@ -10,7 +10,8 @@ create table if not exists restaurants (
   password_hash text not null,
   discount_percent int not null default 10,
   discount_valid_days int not null default 30,
-  high_rating_threshold smallint not null default 4, -- rating >= detta raknas som "hogt" betyg
+  high_rating_threshold smallint not null default 4, -- rating >= detta räknas som "högt" betyg
+  owner_email text, -- valfri: dit lågbetygslarm skickas, ingen alert om null
   created_at timestamptz not null default now()
 );
 

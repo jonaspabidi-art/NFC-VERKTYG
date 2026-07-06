@@ -109,6 +109,7 @@
       document.getElementById("edit-percent").value = restaurant.discountPercent;
       document.getElementById("edit-valid-days").value = restaurant.discountValidDays;
       document.getElementById("edit-threshold").value = restaurant.highRatingThreshold;
+      document.getElementById("edit-owner-email").value = restaurant.ownerEmail || "";
       document.getElementById("edit-message").classList.add("hidden");
       editCard.classList.remove("hidden");
       editCard.scrollIntoView({ behavior: "smooth" });
@@ -196,6 +197,7 @@
         discountPercent: Number(document.getElementById("edit-percent").value),
         discountValidDays: Number(document.getElementById("edit-valid-days").value),
         highRatingThreshold: Number(document.getElementById("edit-threshold").value),
+        ownerEmail: document.getElementById("edit-owner-email").value.trim(),
       };
       const newPassword = document.getElementById("edit-password").value;
       if (newPassword) body.password = newPassword;
@@ -248,6 +250,7 @@
         discountPercent: Number(document.getElementById("new-percent").value),
         discountValidDays: Number(document.getElementById("new-valid-days").value),
         highRatingThreshold: Number(document.getElementById("new-threshold").value),
+        ownerEmail: document.getElementById("new-owner-email").value.trim(),
       };
 
       try {
@@ -266,7 +269,7 @@
 
         messageEl.textContent = `Restaurangen "${data.name}" skapades.`;
         messageEl.classList.remove("hidden");
-        ["new-slug", "new-name", "new-place-id", "new-password"].forEach((id) => {
+        ["new-slug", "new-name", "new-place-id", "new-password", "new-owner-email"].forEach((id) => {
           document.getElementById(id).value = "";
         });
         loadRestaurants();

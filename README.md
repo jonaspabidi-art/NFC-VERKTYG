@@ -59,8 +59,19 @@ som använda) så adminvyns statistik går att se i verkligt bruk direkt.
 1. Skapa ett nytt Railway-projekt, koppla till detta repo.
 2. Sätt miljövariablerna från `.env.example` i Railway (Settings -> Variables):
    `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `IP_HASH_SALT`.
-   `PORT` sätts automatiskt av Railway.
+   `PORT` sätts automatiskt av Railway. `SUPER_ADMIN_PASSWORD_HASH`,
+   `RESEND_API_KEY`, `RESEND_FROM_EMAIL` och `APP_BASE_URL` är valfria
+   (se respektive avsnitt nedan).
 3. Starta-kommando: `npm start`.
+
+### Migrering: lägga till en kolumn på en redan körd databas
+
+`db/schema.sql` körs bara en gång manuellt - om du redan har ett Supabase-
+projekt igång och en ny kolumn tillkommer (t.ex. `owner_email`), kör bara den
+enskilda `alter table`-raden ur schemat i SQL Editor, t.ex.:
+```sql
+alter table restaurants add column if not exists owner_email text;
+```
 
 ## Ultra-admin (hantera alla restaurangkunder)
 
@@ -140,12 +151,46 @@ IP-adresser lagras aldrig i klartext - bara en saltad SHA-256-hash
 (`IP_HASH_SALT`), tillräckligt för att upptäcka mönster utan att spara
 personuppgifter i klartext.
 
+## Lågbetygslarm (mejl vid 1-2 stjärnor)
+
+Restaurangägaren kan få ett mejl direkt när en gäst lämnar ett lågt betyg
+(under `high_rating_threshold`), så de kan agera medan gästen kanske
+fortfarande är kvar.
+
+1. **Skapa ett konto** på [resend.com](https://resend.com) och hämta en API-nyckel.
+2. Sätt `RESEND_API_KEY` i `.env` (lokalt) respektive Railway (produktion).
+   Utan den satt skickas inga larm - lågt betyg sparas som vanligt, bara helt tyst.
+3. Valfritt: sätt `RESEND_FROM_EMAIL` till en avsändaradress på en domän du
+   verifierat hos Resend (bättre leveransgrad). Standard är Resends delade
+   testadress `onboarding@resend.dev`, som fungerar utan egen domän.
+4. Valfritt: sätt `APP_BASE_URL` (t.ex. `https://ditt-namn.up.railway.app`)
+   för att få med en länk till adminvyn i larmmejlet.
+5. Restaurangen sätter sin larm-e-post själv under "Inställningar" i
+   `/admin/dashboard.html`, eller ultra-admin sätter den vid
+   skapande/redigering i `/superadmin/dashboard.html`. Tom = inget larm.
+
+**Fördröjning:** eftersom gästen kan lägga till en kommentar *efter* att
+betyget redan skickats in (se nästa stycke om det trimmade gästflödet),
+väntar systemet 2 minuter innan mejlet skickas, så en eventuell kommentar
+oftast hinner vara med. Fördröjningen ligger i minnet (en enkel `setTimeout`)
+och försvinner om servern startar om/omdeployas precis då - ett känt,
+accepterat undantagsfall för v1.
+
+## Gästflödet: stjärna submittar direkt
+
+Ett tryck på en stjärna skickar in betyget omedelbart (ingen separat
+"Skicka"-knapp). Kommentaren är ett valfritt extra steg på resultatsidan
+efteråt (`PATCH /api/reviews/:id/comment`), eftersom den är mest värdefull
+vid låga betyg och annars bara var friktion i vägen för nöjda gäster som
+snabbt vill vidare till Google-delningen/rabatten.
+
 ## API-översikt
 
 | Metod | Endpoint                                   | Auth   | Beskrivning |
 |-------|---------------------------------------------|--------|-------------|
 | GET   | `/api/restaurants/:slug`                    | Publik | Restaurangnamn för review-sidan |
 | POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
+| PATCH | `/api/reviews/:id/comment`                  | Publik | Lägger till/uppdaterar kommentaren i efterhand |
 | POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken |
 | POST  | `/api/admin/login`                          | Publik | Loggar in, returnerar JWT |
 | GET   | `/api/admin/settings`                       | JWT    | Restaurangens rabattinställningar |
