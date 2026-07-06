@@ -17,8 +17,27 @@
   color: var(--gold);
 }
 
+.stars.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .center {
   text-align: center;
+}
+
+.comment-followup {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.comment-followup label {
+  margin-bottom: 6px;
+}
+
+.comment-followup textarea {
+  margin-bottom: 10px;
 }
 
 .discount-code {

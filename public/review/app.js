@@ -18,18 +18,10 @@
     return;
   }
 
-  let selectedRating = 0;
+  const starsContainer = document.getElementById("stars");
   const stars = document.querySelectorAll("#stars .star");
-  const submitBtn = document.getElementById("submit-btn");
   const formError = document.getElementById("form-error");
-
-  stars.forEach((star) => {
-    star.addEventListener("click", () => {
-      selectedRating = Number(star.dataset.value);
-      stars.forEach((s) => s.classList.toggle("active", Number(s.dataset.value) <= selectedRating));
-      submitBtn.disabled = false;
-    });
-  });
+  let currentReviewId = null;
 
   fetch(`/api/restaurants/${encodeURIComponent(slug)}`)
     .then((res) => {
@@ -44,12 +36,14 @@
       show(notFoundEl);
     });
 
-  submitBtn.addEventListener("click", async () => {
-    if (selectedRating < 1) return;
+  stars.forEach((star) => {
+    star.addEventListener("click", () => submitRating(Number(star.dataset.value)));
+  });
 
+  async function submitRating(rating) {
+    stars.forEach((s) => s.classList.toggle("active", Number(s.dataset.value) <= rating));
+    starsContainer.classList.add("disabled");
     formError.classList.add("hidden");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Skickar...";
 
     try {
       const res = await fetch("/api/reviews", {
@@ -57,8 +51,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           restaurantSlug: slug,
-          rating: selectedRating,
-          comment: document.getElementById("comment").value,
+          rating,
           website: document.getElementById("website").value,
         }),
       });
@@ -68,10 +61,11 @@
       if (!res.ok) {
         formError.textContent = data.error || "Något gick fel, försök igen.";
         formError.classList.remove("hidden");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Skicka recension";
+        starsContainer.classList.remove("disabled");
         return;
       }
+
+      currentReviewId = data.reviewId;
 
       if (data.status === "high_rating") {
         document.getElementById("discount-percent").textContent = `${data.discountPercent}% rabatt`;
@@ -88,15 +82,52 @@
 
         show(resultHighEl);
       } else {
-        document.getElementById("thanks-message").textContent =
-          data.message || "Tack för din feedback!";
+        document.getElementById("thanks-message").textContent = data.message || "Tack för din feedback!";
         show(resultThanksEl);
       }
     } catch (err) {
       formError.textContent = "Kunde inte nå servern, försök igen.";
       formError.classList.remove("hidden");
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Skicka recension";
+      starsContainer.classList.remove("disabled");
     }
-  });
+  }
+
+  function wireCommentFollowup(textareaId, buttonId, messageId) {
+    const textarea = document.getElementById(textareaId);
+    const button = document.getElementById(buttonId);
+    const message = document.getElementById(messageId);
+
+    button.addEventListener("click", async () => {
+      const comment = textarea.value.trim();
+      if (!comment || !currentReviewId) return;
+
+      message.classList.add("hidden");
+      button.disabled = true;
+
+      try {
+        const res = await fetch(`/api/reviews/${currentReviewId}/comment`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ comment }),
+        });
+        const data = await res.json();
+
+        message.textContent = res.ok ? "Tack, kommentaren sparades!" : data.error || "Kunde inte spara kommentaren.";
+        message.classList.remove("hidden");
+        if (res.ok) {
+          textarea.disabled = true;
+          button.disabled = true;
+        } else {
+          button.disabled = false;
+        }
+      } catch (err) {
+        message.textContent = "Kunde inte nå servern, försök igen.";
+        message.classList.remove("hidden");
+        button.disabled = false;
+      }
+    });
+  }
+
+  wireCommentFollowup("comment-high", "save-comment-high", "comment-message-high");
+  wireCommentFollowup("comment-thanks", "save-comment-thanks", "comment-message-thanks");
 })();

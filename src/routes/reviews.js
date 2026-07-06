@@ -75,6 +75,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
   if (!isHighRating) {
     return res.json({
       status: "thanks",
+      reviewId: review.id,
       message: "Tack för din feedback! Den går direkt till restaurangen.",
     });
   }
@@ -94,6 +95,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     // ska ändå få ett svar istället för ett hårt fel.
     return res.json({
       status: "thanks",
+      reviewId: review.id,
       message: "Tack för din recension!",
     });
   }
@@ -106,6 +108,35 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     discountValidUntil: validUntil.toISOString(),
     googleReviewUrl: `https://search.google.com/local/writereview?placeid=${encodeURIComponent(restaurant.google_place_id)}`,
   });
+});
+
+// Publik: review-id är ett svårgissat UUID. Gästen kan lägga till/uppdatera
+// sin kommentar i efterhand, sedan betyget redan skickats in - detta gör att
+// stjärnorna kan submittas direkt utan att gästen först måste ta ställning
+// till om de vill skriva något.
+router.patch("/:id/comment", reviewLimiter, async (req, res) => {
+  const { id } = req.params;
+  const { comment } = req.body || {};
+
+  if (typeof comment !== "string" || comment.trim().length === 0) {
+    return res.status(400).json({ error: "Kommentaren kan inte vara tom." });
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({ comment: comment.slice(0, 2000) })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: "Kunde inte spara kommentaren." });
+  }
+  if (!data) {
+    return res.status(404).json({ error: "Recensionen hittades inte." });
+  }
+
+  res.json({ status: "ok" });
 });
 
 // Publik: review-id är ett svårgissat UUID, så detta läcker ingen känslig data.

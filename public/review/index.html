@@ -20,7 +20,7 @@
 
     <div id="review-form" class="card hidden">
       <h1><span id="restaurant-name" class="accent"></span></h1>
-      <p class="muted">Hur var din upplevelse hos oss idag?</p>
+      <p class="muted">Hur var din upplevelse hos oss idag? Tryck på en stjärna.</p>
 
       <div class="stars" id="stars">
         <span class="star" data-value="1">&#9733;</span>
@@ -30,19 +30,12 @@
         <span class="star" data-value="5">&#9733;</span>
       </div>
 
-      <div class="field">
-        <label for="comment">Kommentar (valfritt)</label>
-        <textarea id="comment" rows="4" placeholder="Berätta gärna mer..."></textarea>
-      </div>
-
       <div class="honeypot-field" aria-hidden="true">
         <label for="website">Lämna detta fält tomt</label>
         <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
       </div>
 
       <p id="form-error" class="error-text hidden"></p>
-
-      <button id="submit-btn" type="button" disabled>Skicka recension</button>
     </div>
 
     <div id="result-high" class="card hidden">
@@ -57,11 +50,25 @@
         <div class="discount-fine-print" id="discount-code"></div>
         <div class="muted" id="discount-valid"></div>
       </div>
+
+      <div class="comment-followup" id="comment-followup-high">
+        <label for="comment-high">Vill du lägga till en kommentar? (valfritt)</label>
+        <textarea id="comment-high" rows="3" placeholder="Berätta gärna mer..."></textarea>
+        <button id="save-comment-high" class="secondary" type="button">Spara kommentar</button>
+        <p id="comment-message-high" class="muted hidden"></p>
+      </div>
     </div>
 
     <div id="result-thanks" class="card hidden center">
       <h2>Tack för din feedback!</h2>
       <p class="muted" id="thanks-message">Den går direkt till restaurangen så vi kan bli bättre.</p>
+
+      <div class="comment-followup" id="comment-followup-thanks">
+        <label for="comment-thanks">Berätta gärna vad som kan bli bättre (valfritt)</label>
+        <textarea id="comment-thanks" rows="3" placeholder="Din feedback går direkt till restaurangen..."></textarea>
+        <button id="save-comment-thanks" class="secondary" type="button">Spara kommentar</button>
+        <p id="comment-message-thanks" class="muted hidden"></p>
+      </div>
     </div>
   </div>
 
