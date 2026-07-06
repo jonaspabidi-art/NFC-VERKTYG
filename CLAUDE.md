@@ -104,11 +104,24 @@ innan de skriver publikt.
    `restaurants.owner_email` vid betyg under tröskeln, 2 min fördröjning för
    att hinna fånga en efterhandskommentar (se beslut 8 ovan). Restaurangen
    sätter sin egen larm-e-post i Inställningar, ultra-admin kan sätta den vid
-   skapande/redigering. Kräver `RESEND_API_KEY` satt för att faktiskt skicka -
-   INTE verifierat mot en riktig Resend-leverans i produktion än (Jonas
-   behöver skapa Resend-konto och ge en API-nyckel, sätta den i Railway, samt
-   köra `alter table restaurants add column if not exists owner_email text;`
-   i Supabase eftersom kolumnen tillkom efter första schema-körningen).
+   skapande/redigering. `owner_email`-kolumnen kördes som separat migrering
+   (låg utanför den ursprungliga schema.sql-körningen).
+   - Verifierat LOKALT med riktig Resend-nyckel: mejl levererat till Jonas
+     egen adress (`onboarding@resend.dev`-avsändare, `last_event: delivered`
+     bekräftat via Resends API).
+   - `RESEND_API_KEY` är ÄNNU INTE satt i Railway - Jonas har nyckeln
+     (`re_jHqhowQg_...`, given i chatten, redan i lokal `.env`) men har inte
+     lagt in den i Railway Variables än. Fråga om det är gjort innan du
+     antar att larmet funkar i produktion.
+   - Viktigt Resend-beslut: Jonas Resend-konto delas med ett annat projekt
+     ("BK Däck", bildäcksbokningar, domän `bkdack.se`/`xn--bkdck-ira.se`
+     redan verifierad där). `onboarding@resend.dev` kan bara leverera till
+     kontots EGEN e-post (Jonas), inte till en godtycklig restaurangägare -
+     Jonas valde MEDVETET att vänta med att verifiera en egen domän för det
+     här projektet (avstod från att återanvända bkdäck-domänen, ville inte
+     köpa en ny domän direkt heller) - så riktiga tredjeparts-restaurangmejl
+     fungerar INTE förrän en domän skaffas/verifieras. Fråga inte om att
+     återanvända bkdäck-domänen igen, redan diskuterat och avböjt.
 3. **Automatisk månadsrapport** till ägaren (antal recensioner, snitt,
    inlösta koder) - minskar churn, blir säljmaterial.
 4. **Engelska** som andraspråk på gästsidan (turister).
