@@ -1,0 +1,139 @@
+# Restaurant Reviews - recensionssystem via NFC
+
+Multi-tenant recensionssystem: gasten tappar mobilen mot en NFC-ståndare på
+bordet, betygsätter besöket (1-5 stjärnor) och skriver en kort kommentar.
+Höga betyg uppmanas att dela recensionen vidare på Google mot en rabattkod.
+Låga betyg går som intern feedback till restaurangägaren. Flera restauranger
+kan använda samma installation utan att se varandras data.
+
+## Stack
+
+- **Backend**: Node.js + Express (`src/`), tänkt att hostas på Railway
+- **Databas**: Supabase (Postgres), åtkomst enbart via service-role-nyckeln server-side
+- **Frontend**: statisk HTML/CSS/vanilla JS (`public/`), mörkt tema med guldaccenter, mobiloptimerad
+- **NFC**: NTAG215-taggar skrivna med en URL som pekar på `/review/index.html?r=<restaurang-slug>`
+
+Se tekniska avvägningar och motiveringar i koden (kommentarer i `src/`) - de
+viktigaste är: NFC-URL:en innehåller bara restaurangens slug (Google Place ID
+slås upp server-side, så en gammal/kopierad tagg aldrig kan peka mot fel
+Google-sida), och rabattkoder löses in via restaurangens admin-inloggning
+istället för ett separat personalkonto-system.
+
+## Komma igång lokalt
+
+1. **Skapa ett Supabase-projekt** (supabase.com) och hämta `Project URL` och
+   `service_role`-nyckeln under Project Settings -> API.
+2. **Kör databasschemat**: öppna Supabase SQL Editor, klistra in och kör
+   `db/schema.sql`, kör sedan `db/seed.sql` för testdata (två exempel-
+   restauranger med recensioner och rabattkoder).
+3. **Konfigurera miljövariabler**:
+   ```bash
+   cp .env.example .env
+   # fyll i SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+   # generera egna slumpade värden för JWT_SECRET och IP_HASH_SALT, t.ex:
+   openssl rand -hex 32
+   ```
+4. **Installera och starta**:
+   ```bash
+   npm install
+   npm start
+   # eller under utveckling, med auto-reload:
+   npm run dev
+   ```
+5. Öppna `http://localhost:3000/review/index.html?r=pizzeria-bella` för att
+   testa recensionsflödet, eller `http://localhost:3000/admin/login.html` för
+   adminvyn.
+
+### Testinloggningar (från seed-datan)
+
+| Restaurang       | Slug              | Lösenord      |
+|------------------|-------------------|---------------|
+| Pizzeria Bella   | `pizzeria-bella`  | `pizzeria123` |
+| Sushi Yama       | `sushi-yama`      | `sushi123`    |
+
+Seed-datan innehåller också redan genererade rabattkoder (vissa markerade
+som använda) så adminvyns statistik går att se i verkligt bruk direkt.
+
+## Deploy till Railway
+
+1. Skapa ett nytt Railway-projekt, koppla till detta repo.
+2. Sätt miljövariablerna från `.env.example` i Railway (Settings -> Variables):
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `IP_HASH_SALT`.
+   `PORT` sätts automatiskt av Railway.
+3. Starta-kommando: `npm start`.
+
+## Lägga till en ny restaurangkund
+
+Ingen kod behöver skrivas om. Lägg bara till en ny rad i `restaurants`-tabellen:
+
+1. Generera en lösenordshash:
+   ```bash
+   npm run hash-password -- "restaurangens-onskade-losenord"
+   ```
+2. Kör en INSERT i Supabase SQL Editor:
+   ```sql
+   insert into restaurants (slug, name, google_place_id, password_hash)
+   values ('ny-restaurang', 'Ny Restaurang AB', '<GOOGLE_PLACE_ID>', '<hash fran steg 1>');
+   ```
+3. Skriv en NFC-tagg som pekar mot `https://<din-domän>/review/index.html?r=ny-restaurang`
+   (se nästa avsnitt).
+4. Ägaren loggar in på `/admin/login.html` med slug `ny-restaurang` och sitt lösenord.
+
+Valfria kolumner (`discount_percent`, `discount_valid_days`,
+`high_rating_threshold`) har rimliga standardvärden (10%, 30 dagar, betyg
+>= 4 räknas som högt) men kan sättas per restaurang i samma INSERT.
+
+## Skriva NFC-taggar (NTAG215)
+
+1. Installera en NFC-skrivarapp, t.ex. **NFC Tools** (Android/iOS) eller
+   **TagWriter by NXP**.
+2. Välj "Write" / "Skriv" -> lägg till en post av typen **URL/URI**.
+3. Klistra in: `https://<din-domän>/review/index.html?r=<restaurang-slug>`
+4. Håll telefonen mot NTAG215-taggen tills appen bekräftar att skrivningen lyckades.
+5. Testa genast genom att tappa en annan telefon mot taggen och verifiera att
+   rätt restaurangnamn visas.
+
+## Hämta Google Place ID
+
+1. Gå till Google Maps Platforms verktyg för att hitta Place ID:
+   https://developers.google.com/maps/documentation/places/web-service/place-id
+2. Sök på restaurangens namn och adress i sökrutan på sidan.
+3. Kopiera det `Place ID` som visas och använd det som `google_place_id` i
+   `restaurants`-tabellen.
+
+## Spam-/missbruksskydd
+
+Tre lager, ingen kräver inloggning från gästen:
+
+1. **IP-baserad rate limit** (`express-rate-limit`): max 10 recensionsförsök
+   per IP var 15:e minut.
+2. **Enhets-cookie** (`device_id`, httpOnly, 1 år): samma enhet kan inte
+   recensera samma restaurang igen inom 24 timmar.
+3. **Honeypot-fält**: ett dolt formulärfält som riktiga användare aldrig
+   fyller i - fylls det i låtsas vi att det lyckades utan att spara något.
+
+IP-adresser lagras aldrig i klartext - bara en saltad SHA-256-hash
+(`IP_HASH_SALT`), tillräckligt för att upptäcka mönster utan att spara
+personuppgifter i klartext.
+
+## API-översikt
+
+| Metod | Endpoint                                   | Auth   | Beskrivning |
+|-------|---------------------------------------------|--------|-------------|
+| GET   | `/api/restaurants/:slug`                    | Publik | Restaurangnamn för review-sidan |
+| POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
+| POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken |
+| POST  | `/api/admin/login`                          | Publik | Loggar in, returnerar JWT |
+| GET   | `/api/admin/stats`                          | JWT    | Statistik för inloggad restaurang |
+| GET   | `/api/admin/reviews`                        | JWT    | Paginerad recensionslista |
+| POST  | `/api/admin/discounts/:code/redeem`         | JWT    | Markerar en rabattkod som använd |
+
+## Kända begränsningar / vidareutveckling
+
+- Statistik i `/api/admin/stats` beräknas i Node genom att hämta alla
+  recensioner för restaurangen. Fungerar bra för normal volym; om en
+  restaurang får väldigt många recensioner bör detta flyttas till
+  SQL-aggregering (`avg()`, `count() ... group by`).
+- Adminlösenord hanteras helt av denna app (bcrypt + JWT). Det finns ingen
+  "glömt lösenord"-flöde i v1 - ett nytt lösenord sätts genom att köra
+  `npm run hash-password` och uppdatera `password_hash` direkt i databasen.

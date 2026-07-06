@@ -1,0 +1,39 @@
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: 2.4rem;
+  margin: 20px 0;
+  user-select: none;
+}
+
+.stars .star {
+  cursor: pointer;
+  color: var(--border);
+  transition: color 0.15s ease;
+}
+
+.stars .star.active {
+  color: var(--gold);
+}
+
+.center {
+  text-align: center;
+}
+
+.discount-code {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  background: var(--gold-soft);
+  border: 1px dashed var(--gold);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.hidden {
+  display: none !important;
+}

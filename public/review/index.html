@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lamna en recension</title>
+  <link rel="stylesheet" href="/shared/theme.css" />
+  <link rel="stylesheet" href="/review/style.css" />
+</head>
+<body>
+  <div class="page">
+    <div id="loading" class="card center">
+      <p class="muted">Laddar...</p>
+    </div>
+
+    <div id="not-found" class="card center hidden">
+      <h2>Restaurangen hittades inte</h2>
+      <p class="muted">Kontrollera lanken eller fraga personalen om hjalp.</p>
+    </div>
+
+    <div id="review-form" class="card hidden">
+      <h1><span id="restaurant-name" class="accent"></span></h1>
+      <p class="muted">Hur var din upplevelse hos oss idag?</p>
+
+      <div class="stars" id="stars">
+        <span class="star" data-value="1">&#9733;</span>
+        <span class="star" data-value="2">&#9733;</span>
+        <span class="star" data-value="3">&#9733;</span>
+        <span class="star" data-value="4">&#9733;</span>
+        <span class="star" data-value="5">&#9733;</span>
+      </div>
+
+      <div class="field">
+        <label for="comment">Kommentar (valfritt)</label>
+        <textarea id="comment" rows="4" placeholder="Beratta gama mer..."></textarea>
+      </div>
+
+      <div class="honeypot-field" aria-hidden="true">
+        <label for="website">Lamna detta falt tomt</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <p id="form-error" class="error-text hidden"></p>
+
+      <button id="submit-btn" type="button" disabled>Skicka recension</button>
+    </div>
+
+    <div id="result-high" class="card hidden">
+      <h2>Tack for ditt fina betyg!</h2>
+      <p>Vi vore valdigt tacksamma om du ville dela din upplevelse pa Google.</p>
+      <p class="muted">Som tack far du en rabattkod:</p>
+      <div class="discount-code" id="discount-code"></div>
+      <p class="muted" id="discount-valid"></p>
+      <a href="#" id="google-link" class="button" target="_blank" rel="noopener">Lamna recension pa Google</a>
+    </div>
+
+    <div id="result-thanks" class="card hidden center">
+      <h2>Tack for din feedback!</h2>
+      <p class="muted" id="thanks-message">Den gar direkt till restaurangen sa vi kan bli battre.</p>
+    </div>
+  </div>
+
+  <script src="/review/app.js"></script>
+</body>
+</html>
