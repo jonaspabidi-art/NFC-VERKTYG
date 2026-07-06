@@ -60,8 +60,9 @@ som använda) så adminvyns statistik går att se i verkligt bruk direkt.
 2. Sätt miljövariablerna från `.env.example` i Railway (Settings -> Variables):
    `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `IP_HASH_SALT`.
    `PORT` sätts automatiskt av Railway. `SUPER_ADMIN_PASSWORD_HASH`,
-   `RESEND_API_KEY`, `RESEND_FROM_EMAIL` och `APP_BASE_URL` är valfria
-   (se respektive avsnitt nedan).
+   `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `APP_BASE_URL`, `ELKS_API_USERNAME`,
+   `ELKS_API_PASSWORD` och `ELKS_FROM` är valfria (se respektive avsnitt
+   nedan).
 3. Starta-kommando: `npm start`.
 
 ### Migrering: lägga till en kolumn på en redan körd databas
@@ -77,6 +78,9 @@ alter table reviews add column if not exists contact_email text;
 alter table reviews add column if not exists contact_phone text;
 alter table restaurants add column if not exists logo_url text;
 alter table restaurants add column if not exists accent_color text;
+alter table reviews add column if not exists reminder_phone text;
+alter table discount_codes add column if not exists discount_percent int;
+alter table discount_codes add column if not exists bonus_applied boolean not null default false;
 ```
 
 ## Ultra-admin (hantera alla restaurangkunder)
@@ -209,6 +213,37 @@ efteråt (`PATCH /api/reviews/:id/comment`), eftersom den är mest värdefull
 vid låga betyg och annars bara var friktion i vägen för nöjda gäster som
 snabbt vill vidare till Google-delningen/rabatten.
 
+## Google-bonusrabatt + SMS-påminnelse (högt betyg)
+
+Efter ett högt betyg kan gästen valfritt lämna sitt mobilnummer för att låsa
+upp en extra rabatt (`GOOGLE_BONUS_PERCENT` i `src/routes/reviews.js`,
+för närvarande 10 procentenheter utöver ordinarie rabatt) genom att dela
+recensionen på Google.
+
+- **Direkt bonus**: har gästen redan klickat på Google-länken innan de
+  lämnar numret, läggs bonusen på omedelbart och rabattkoden på skärmen
+  uppdateras direkt - ingen SMS behövs.
+- **SMS-påminnelse**: har de inte klickat än, väntar systemet 15 minuter
+  (`GOOGLE_BONUS_REMINDER_DELAY_MS`) och skickar då ett SMS med
+  Google-länken, om de fortfarande inte klickat. Samma in-memory
+  `setTimeout`-avvägning som lågbetygslarmet (försvinner vid
+  omstart/redeploy mitt i fönstret, accepterat för v1).
+- **En kod, inte två**: eftersom varje recension bara får en rabattkod
+  (`discount_codes.review_id` är unikt, för att gottgörelseflödet ska
+  förbli idempotent) höjs den befintliga kodens värde istället för att
+  skapa en ny. `discount_codes.bonus_applied` förhindrar att bonusen läggs
+  på två gånger (t.ex. om gästen både klickar och numret redan var sparat).
+- **Tekniskt sett ovillkorad av en faktisk Google-recension** - precis som
+  ordinarie rabatt mäter vi bara klicket på länken, aldrig om en recension
+  faktiskt postats (se avsnittet om spam-/missbruksskydd och beslut 2 i
+  `CLAUDE.md`). Medvetet vald avvägning av Jonas - se `CLAUDE.md` för
+  resonemanget.
+- **SMS via [46elks](https://46elks.se)**: sätt `ELKS_API_USERNAME` och
+  `ELKS_API_PASSWORD` (från ditt 46elks-konto) i `.env`/Railway. Utan dem
+  skickas inga påminnelser - bonusen kan ändå låsas upp direkt vid klick,
+  bara SMS-delen är avstängd. `ELKS_FROM` är valfri avsändare (nummer eller
+  kort text); saknas den används 46elks standardavsändare.
+
 ## Kontaktuppgifter vid lågt betyg + gottgörelsekod
 
 Efter ett lågt betyg kan gästen valfritt lämna e-post och/eller telefon om
@@ -248,7 +283,8 @@ mörka/guld-temat:
 | POST  | `/api/reviews`                              | Publik | Skapar en recension, ev. rabattkod |
 | PATCH | `/api/reviews/:id/comment`                  | Publik | Lägger till/uppdaterar kommentaren i efterhand |
 | PATCH | `/api/reviews/:id/contact`                  | Publik | Lämnar valfria kontaktuppgifter (lågt betyg) |
-| POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken |
+| PATCH | `/api/reviews/:id/phone`                    | Publik | Lämnar mobilnummer för Google-bonus + SMS-påminnelse (högt betyg) |
+| POST  | `/api/reviews/:id/google-click`             | Publik | Registrerar klick på Google-länken, lägger på bonusen om numret redan lämnats |
 | POST  | `/api/admin/login`                          | Publik | Loggar in, returnerar JWT |
 | GET   | `/api/admin/settings`                       | JWT    | Restaurangens rabattinställningar |
 | PATCH | `/api/admin/settings`                       | JWT    | Uppdaterar rabattinställningar |

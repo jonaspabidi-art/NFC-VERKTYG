@@ -28,6 +28,7 @@ create table if not exists reviews (
   clicked_google boolean not null default false,
   contact_email text, -- valfri: gästen vill bli kontaktad av restaurangen
   contact_phone text,
+  reminder_phone text, -- valfri: högt betyg, gäst vill ha SMS-påminnelse + bonusrabatt för Google-delning
   created_at timestamptz not null default now()
 );
 create index if not exists reviews_restaurant_idx on reviews (restaurant_id, created_at desc);
@@ -38,6 +39,8 @@ create table if not exists discount_codes (
   restaurant_id uuid not null references restaurants(id) on delete cascade,
   review_id uuid unique references reviews(id) on delete cascade,
   code text unique not null,
+  discount_percent int, -- procenten koden faktiskt är värd just nu (kan höjas av Google-delningsbonusen)
+  bonus_applied boolean not null default false, -- har +10%-bonusen redan lagts på, för att undvika dubbel bonus
   valid_until timestamptz not null,
   used boolean not null default false,
   used_at timestamptz,

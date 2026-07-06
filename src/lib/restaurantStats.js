@@ -50,7 +50,10 @@ async function getRestaurantReviews(restaurantId, page, pageSize) {
 
   const { data, error, count } = await supabase
     .from("reviews")
-    .select("id, rating, comment, clicked_google, contact_email, contact_phone, created_at", { count: "exact" })
+    .select(
+      "id, rating, comment, clicked_google, contact_email, contact_phone, reminder_phone, created_at",
+      { count: "exact" }
+    )
     .eq("restaurant_id", restaurantId)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -62,7 +65,10 @@ async function getRestaurantReviews(restaurantId, page, pageSize) {
   const reviewIds = data.map((review) => review.id);
   const { data: discountCodes, error: discountError } =
     reviewIds.length > 0
-      ? await supabase.from("discount_codes").select("review_id, code, valid_until").in("review_id", reviewIds)
+      ? await supabase
+          .from("discount_codes")
+          .select("review_id, code, discount_percent, bonus_applied, valid_until")
+          .in("review_id", reviewIds)
       : { data: [], error: null };
 
   if (discountError) {
@@ -77,6 +83,8 @@ async function getRestaurantReviews(restaurantId, page, pageSize) {
   const reviews = data.map((review) => ({
     ...review,
     discount_code: discountByReviewId[review.id]?.code || null,
+    discount_percent: discountByReviewId[review.id]?.discount_percent || null,
+    discount_bonus_applied: discountByReviewId[review.id]?.bonus_applied || false,
     discount_valid_until: discountByReviewId[review.id]?.valid_until || null,
   }));
 

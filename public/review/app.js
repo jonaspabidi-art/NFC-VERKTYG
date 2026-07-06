@@ -98,7 +98,14 @@
         const googleLink = document.getElementById("google-link");
         googleLink.href = data.googleReviewUrl;
         googleLink.addEventListener("click", () => {
-          fetch(`/api/reviews/${data.reviewId}/google-click`, { method: "POST" }).catch(() => {});
+          fetch(`/api/reviews/${data.reviewId}/google-click`, { method: "POST" })
+            .then((r) => r.json())
+            .then((clickData) => {
+              if (clickData.bonusApplied) {
+                showBonusUnlocked(clickData.discountPercent);
+              }
+            })
+            .catch(() => {});
         });
 
         show(resultHighEl);
@@ -111,6 +118,13 @@
       formError.classList.remove("hidden");
       starsContainer.classList.remove("disabled");
     }
+  }
+
+  function showBonusUnlocked(discountPercent) {
+    document.getElementById("discount-percent").textContent = `${discountPercent}% rabatt`;
+    const phoneMessage = document.getElementById("phone-message");
+    phoneMessage.textContent = "Grattis, din rabatt är uppdaterad!";
+    phoneMessage.classList.remove("hidden");
   }
 
   function wireCommentFollowup(textareaId, buttonId, messageId) {
@@ -180,6 +194,46 @@
         phoneInput.disabled = true;
       } else {
         button.disabled = false;
+      }
+    } catch (err) {
+      message.textContent = "Kunde inte nå servern, försök igen.";
+      message.classList.remove("hidden");
+      button.disabled = false;
+    }
+  });
+
+  document.getElementById("save-phone").addEventListener("click", async () => {
+    const phoneInput = document.getElementById("bonus-phone");
+    const button = document.getElementById("save-phone");
+    const message = document.getElementById("phone-message");
+
+    const phone = phoneInput.value.trim();
+    if (!phone) return;
+
+    message.classList.add("hidden");
+    button.disabled = true;
+
+    try {
+      const res = await fetch(`/api/reviews/${currentReviewId}/phone`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        message.textContent = data.error || "Kunde inte spara numret.";
+        message.classList.remove("hidden");
+        button.disabled = false;
+        return;
+      }
+
+      phoneInput.disabled = true;
+      if (data.bonusApplied) {
+        showBonusUnlocked(data.discountPercent);
+      } else {
+        message.textContent = "Tack! Vi påminner dig om du inte hunnit dela än.";
+        message.classList.remove("hidden");
       }
     } catch (err) {
       message.textContent = "Kunde inte nå servern, försök igen.";

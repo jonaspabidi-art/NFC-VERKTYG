@@ -3,6 +3,7 @@ const supabase = require("../lib/supabaseClient");
 const { hashIp } = require("../lib/hash");
 const { generateDiscountCode } = require("../lib/discountCode");
 const { sendLowRatingAlert } = require("../lib/emailAlerts");
+const { sendGoogleBonusReminderSms } = require("../lib/smsAlerts");
 const deviceId = require("../middleware/deviceId");
 const { reviewLimiter } = require("../middleware/rateLimiters");
 
@@ -13,6 +14,13 @@ const DEVICE_COOLDOWN_HOURS = 24;
 // Ger gästen tid att lägga till en kommentar (PATCH /:id/comment) på
 // resultatsidan innan larmet går iväg, så ägaren oftast får texten också.
 const LOW_RATING_ALERT_DELAY_MS = 2 * 60 * 1000;
+// Extra procentenheter utöver ordinarie rabatt, upplåst genom att lämna
+// telefonnummer OCH klicka på Google-länken. Medvetet ovillkorad av att en
+// recension faktiskt postas (kan bara mäta klicket) - se CLAUDE.md.
+const GOOGLE_BONUS_PERCENT = 10;
+// Hur länge vi väntar innan påminnelse-SMS:et skickas om gästen ännu inte
+// klickat på Google-länken.
+const GOOGLE_BONUS_REMINDER_DELAY_MS = 15 * 60 * 1000;
 
 // In-memory fördröjning - ett schemalagt larm förloras vid omstart/redeploy.
 // Accepterad avvägning för v1 (samma nivå som övriga enkla lösningar här).
@@ -34,6 +42,66 @@ function scheduleLowRatingAlert(restaurant, reviewId) {
       console.error(`Kunde inte skicka lågbetygslarm för ${restaurant.slug}:`, err.message);
     }
   }, LOW_RATING_ALERT_DELAY_MS);
+}
+
+// Höjer den befintliga koden med GOOGLE_BONUS_PERCENT om den inte redan har
+// fått bonusen. En kod per recension (unik `review_id`), så bonusen läggs
+// alltid på samma kod istället för att skapa en andra.
+async function applyGoogleBonus(reviewId) {
+  const { data: discount, error } = await supabase
+    .from("discount_codes")
+    .select("id, discount_percent, bonus_applied")
+    .eq("review_id", reviewId)
+    .maybeSingle();
+
+  if (error || !discount || discount.bonus_applied) {
+    return null;
+  }
+
+  const newPercent = (discount.discount_percent || 0) + GOOGLE_BONUS_PERCENT;
+
+  const { data: updated, error: updateError } = await supabase
+    .from("discount_codes")
+    .update({ discount_percent: newPercent, bonus_applied: true })
+    .eq("id", discount.id)
+    .select("discount_percent")
+    .single();
+
+  if (updateError) {
+    return null;
+  }
+
+  return updated.discount_percent;
+}
+
+// In-memory fördröjning, samma accepterade avvägning som lågbetygslarmet.
+function scheduleGoogleBonusReminder(restaurant, reviewId, phone) {
+  setTimeout(async () => {
+    try {
+      const { data: freshReview } = await supabase
+        .from("reviews")
+        .select("clicked_google")
+        .eq("id", reviewId)
+        .maybeSingle();
+
+      if (!freshReview || freshReview.clicked_google) return;
+
+      const { data: discount } = await supabase
+        .from("discount_codes")
+        .select("bonus_applied")
+        .eq("review_id", reviewId)
+        .maybeSingle();
+
+      if (!discount || discount.bonus_applied) return;
+
+      const googleReviewUrl = `https://search.google.com/local/writereview?placeid=${encodeURIComponent(
+        restaurant.google_place_id
+      )}`;
+      await sendGoogleBonusReminderSms(restaurant, GOOGLE_BONUS_PERCENT, googleReviewUrl, phone);
+    } catch (err) {
+      console.error(`Kunde inte skicka Google-bonuspåminnelse för ${restaurant.slug}:`, err.message);
+    }
+  }, GOOGLE_BONUS_REMINDER_DELAY_MS);
 }
 
 router.post("/", deviceId, reviewLimiter, async (req, res) => {
@@ -116,6 +184,7 @@ router.post("/", deviceId, reviewLimiter, async (req, res) => {
     restaurant_id: restaurant.id,
     review_id: review.id,
     code,
+    discount_percent: restaurant.discount_percent,
     valid_until: validUntil.toISOString(),
   });
 
@@ -208,18 +277,81 @@ router.patch("/:id/contact", reviewLimiter, async (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Publik: review-id är ett svårgissat UUID. Gästen kan valfritt lämna sitt
+// telefonnummer efter ett högt betyg för att låsa upp en bonusrabatt genom
+// att dela på Google - antingen direkt (om de redan klickat) eller via en
+// påminnelse om 15 minuter om de inte hunnit än.
+router.patch("/:id/phone", reviewLimiter, async (req, res) => {
+  const { id } = req.params;
+  const { phone } = req.body || {};
+
+  const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
+  if (!trimmedPhone || trimmedPhone.length < 6 || trimmedPhone.length > 30) {
+    return res.status(400).json({ error: "Ange ett giltigt telefonnummer." });
+  }
+
+  const { data: review, error: reviewError } = await supabase
+    .from("reviews")
+    .update({ reminder_phone: trimmedPhone })
+    .eq("id", id)
+    .select("id, restaurant_id, clicked_google")
+    .maybeSingle();
+
+  if (reviewError) {
+    return res.status(500).json({ error: "Kunde inte spara telefonnumret." });
+  }
+  if (!review) {
+    return res.status(404).json({ error: "Recensionen hittades inte." });
+  }
+
+  if (review.clicked_google) {
+    const newPercent = await applyGoogleBonus(review.id);
+    if (newPercent) {
+      return res.json({ status: "ok", bonusApplied: true, discountPercent: newPercent });
+    }
+  } else {
+    const { data: restaurant } = await supabase
+      .from("restaurants")
+      .select("slug, name, google_place_id")
+      .eq("id", review.restaurant_id)
+      .maybeSingle();
+
+    if (restaurant) {
+      scheduleGoogleBonusReminder(restaurant, review.id, trimmedPhone);
+    }
+  }
+
+  res.json({ status: "ok", bonusApplied: false });
+});
+
 // Publik: review-id är ett svårgissat UUID, så detta läcker ingen känslig data.
-// Används enbart för att räkna hur många som faktiskt klickar sig vidare.
+// Används dels för att räkna klick, dels för att lägga på Google-bonusen
+// direkt om gästen redan lämnat sitt telefonnummer.
 router.post("/:id/google-click", async (req, res) => {
   const { id } = req.params;
 
-  const { error } = await supabase.from("reviews").update({ clicked_google: true }).eq("id", id);
+  const { data: review, error } = await supabase
+    .from("reviews")
+    .update({ clicked_google: true })
+    .eq("id", id)
+    .select("id, reminder_phone")
+    .maybeSingle();
 
   if (error) {
     return res.status(500).json({ error: "Kunde inte registrera klicket." });
   }
+  if (!review) {
+    return res.status(404).json({ error: "Recensionen hittades inte." });
+  }
 
-  res.json({ status: "ok" });
+  if (review.reminder_phone) {
+    const newPercent = await applyGoogleBonus(review.id);
+    if (newPercent) {
+      return res.json({ status: "ok", bonusApplied: true, discountPercent: newPercent });
+    }
+  }
+
+  res.json({ status: "ok", bonusApplied: false });
 });
 
 module.exports = router;

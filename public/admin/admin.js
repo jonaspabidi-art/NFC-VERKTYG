@@ -122,7 +122,10 @@
 
         let actionHtml = '<span class="muted">-</span>';
         if (review.discount_code) {
-          actionHtml = `<span class="rating-badge">${escapeHtml(review.discount_code)}</span>`;
+          const percentText = review.discount_percent
+            ? ` (${review.discount_percent}%${review.discount_bonus_applied ? ", bonus" : ""})`
+            : "";
+          actionHtml = `<span class="rating-badge">${escapeHtml(review.discount_code)}${percentText}</span>`;
         } else if (review.contact_email || review.contact_phone) {
           actionHtml = `<button class="secondary recovery-btn">Skicka gottgörelsekod</button>`;
         }

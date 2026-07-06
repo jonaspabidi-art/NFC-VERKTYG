@@ -24,4 +24,9 @@ module.exports = {
   // Valfri: din publika URL (utan avslutande /), t.ex. https://mitt-namn.up.railway.app.
   // Används bara för att lägga en länk till adminvyn i larmmejlet.
   appBaseUrl: process.env.APP_BASE_URL || null,
+  // Valfri: om användarnamn/lösenord saknas skickas inga SMS-påminnelser (bara loggas).
+  elksApiUsername: process.env.ELKS_API_USERNAME || null,
+  elksApiPassword: process.env.ELKS_API_PASSWORD || null,
+  // Valfri avsändare (nummer eller kort text) - utan den använder 46elks sin standardavsändare.
+  elksFrom: process.env.ELKS_FROM || null,
 };

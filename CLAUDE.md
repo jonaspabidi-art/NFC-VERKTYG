@@ -70,6 +70,13 @@ innan de skriver publikt.
    incitament kopplade till recensioner. Jonas vill ändå att UI-texten säljer
    in Google-delningen hårt ("dela → visa i kassan → rabatt") - bygg ALDRIG
    verifiering av att en Google-recension faktiskt postats.
+   - **Undantag, medvetet beslutat av Jonas (2026-07-06)**: Google-bonusen
+     (se roadmap-punkt 6) HÖJER en befintlig kod baserat på om gästen
+     klickat på Google-länken (`reviews.clicked_google`), inte på en
+     bekräftad recension - fortfarande bara ett klick, aldrig en verifierad
+     post. Jonas resonemang: "rabatten är en gåva, inte en muta" - han är
+     medveten om och accepterar risken att Google ändå kan se mönstret som
+     incitamentsstyrt. Fråga inte om detta igen, redan avvägt och beslutat.
 3. **Spamskydd i tre lager** (IP-rate-limit, 24h device-cookie per restaurang,
    honeypot) - medvetet "bra nog", inte vattentätt. Jonas har bekräftat att
    det ska vara kvar. Honeypot-träff returnerar fejkad success.
@@ -150,9 +157,24 @@ innan de skriver publikt.
    ALDRIG admin-/ultra-admin-temat. Trasig loggo-URL döljs tyst (ingen
    trasig bild-ikon). `logo_url`/`accent_color`-kolumnerna kräver samma typ
    av separat migrering som tidigare kolumner.
-6. **SMS-påminnelse** några timmar efter högt betyg för att slutföra
-   Google-recensionen - diskuterad och medvetet parkerad (PII/GDPR + kostnad,
-   opt-in-fält efter inskickat betyg). Jonas tror på den för konvertering.
+6. ~~**Google-bonusrabatt + SMS-påminnelse**~~ - KLART (2026-07-06): efter
+   högt betyg kan gästen lämna mobilnummer för att låsa upp
+   `GOOGLE_BONUS_PERCENT` (10 procentenheter, konstant i
+   `src/routes/reviews.js`) extra rabatt genom att klicka på Google-länken.
+   Klickat redan? Bonusen läggs på direkt (`applyGoogleBonus()`). Annars
+   schemaläggs en påminnelse-SMS via 46elks efter
+   `GOOGLE_BONUS_REMINDER_DELAY_MS` (15 min, samma in-memory-`setTimeout`-
+   avvägning som lågbetygslarmet - se beslut 8). Eftersom
+   `discount_codes.review_id` är unikt höjs SAMMA kods `discount_percent`
+   istället för att skapa en andra kod; `bonus_applied` förhindrar
+   dubbel-bonus. Se beslut 2 ovan för det medvetna undantaget från
+   Google-ToS-försiktigheten. `reviews.reminder_phone`,
+   `discount_codes.discount_percent`/`bonus_applied` kräver samma typ av
+   separat migrering som tidigare kolumner. `ELKS_API_USERNAME`/
+   `ELKS_API_PASSWORD` (46elks) är ÄNNU INTE satta i Railway - utan dem
+   fungerar bonusen (klick-flödet) men inga påminnelse-SMS skickas, bara
+   loggas tyst. Fråga om Jonas skaffat 46elks-konto innan du antar att
+   SMS:en går ut i produktion.
 7. **Demo-restaurang** med snygg data för säljmöten.
 8. ~~**Kontaktuppgifter + gottgörelsekod vid lågt betyg**~~ - KLART
    (2026-07-06, Jonas egen idé): gästen kan valfritt lämna e-post/telefon

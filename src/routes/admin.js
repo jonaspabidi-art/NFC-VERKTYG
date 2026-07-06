@@ -188,6 +188,7 @@ router.post("/reviews/:id/recovery-discount", requireAuth, async (req, res) => {
     restaurant_id: req.restaurantId,
     review_id: review.id,
     code,
+    discount_percent: restaurant.discount_percent,
     valid_until: validUntil.toISOString(),
   });
 
