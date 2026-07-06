@@ -112,7 +112,74 @@
       document.getElementById("edit-message").classList.add("hidden");
       editCard.classList.remove("hidden");
       editCard.scrollIntoView({ behavior: "smooth" });
+
+      loadDetailStats(restaurant.id);
+      loadDetailReviews(restaurant.id, 1);
     }
+
+    async function loadDetailStats(restaurantId) {
+      const res = await authedFetch(`/api/superadmin/restaurants/${restaurantId}/stats`);
+      const stats = await res.json();
+
+      document.getElementById("sa-stat-total").textContent = stats.totalReviews;
+      document.getElementById("sa-stat-average").textContent = stats.averageRating.toFixed(2);
+      document.getElementById("sa-stat-clicks").textContent = stats.googleClicks;
+      document.getElementById("sa-stat-discounts").textContent = `${stats.discountsUsed} / ${stats.discountsIssued}`;
+
+      const distributionEl = document.getElementById("sa-distribution");
+      distributionEl.innerHTML = "";
+      const max = Math.max(1, ...Object.values(stats.distribution));
+
+      for (let rating = 5; rating >= 1; rating--) {
+        const count = stats.distribution[rating] || 0;
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+          <span class="bar-label">${rating} stjärnor</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${(count / max) * 100}%"></span></span>
+          <span class="bar-count">${count}</span>
+        `;
+        distributionEl.appendChild(row);
+      }
+    }
+
+    let detailPage = 1;
+    const detailPageSize = 10;
+
+    async function loadDetailReviews(restaurantId, page) {
+      detailPage = page;
+      const res = await authedFetch(
+        `/api/superadmin/restaurants/${restaurantId}/reviews?page=${page}&pageSize=${detailPageSize}`
+      );
+      const data = await res.json();
+
+      const body = document.getElementById("sa-reviews-body");
+      body.innerHTML = "";
+
+      data.reviews.forEach((review) => {
+        const row = document.createElement("tr");
+        const date = new Date(review.created_at).toLocaleDateString("sv-SE");
+        row.innerHTML = `
+          <td>${date}</td>
+          <td class="rating-badge">${review.rating}</td>
+          <td>${review.comment ? escapeHtml(review.comment) : '<span class="muted">-</span>'}</td>
+          <td>${review.clicked_google ? "Ja" : "Nej"}</td>
+        `;
+        body.appendChild(row);
+      });
+
+      const totalPages = Math.max(1, Math.ceil(data.total / detailPageSize));
+      document.getElementById("sa-page-label").textContent = `Sida ${page} av ${totalPages}`;
+      document.getElementById("sa-prev-page").disabled = page <= 1;
+      document.getElementById("sa-next-page").disabled = page >= totalPages;
+    }
+
+    document.getElementById("sa-prev-page").addEventListener("click", () => {
+      if (detailPage > 1) loadDetailReviews(editingId, detailPage - 1);
+    });
+    document.getElementById("sa-next-page").addEventListener("click", () => {
+      loadDetailReviews(editingId, detailPage + 1);
+    });
 
     document.getElementById("cancel-edit-btn").addEventListener("click", () => {
       editingId = null;

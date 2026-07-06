@@ -49,7 +49,45 @@
     </div>
 
     <div class="card hidden" id="edit-card">
-      <h3>Redigera <span id="edit-name-label"></span></h3>
+      <h3>Statistik: <span id="edit-name-label"></span></h3>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="value" id="sa-stat-total">-</div>
+          <div class="label">Recensioner</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="sa-stat-average">-</div>
+          <div class="label">Snittbetyg</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="sa-stat-clicks">-</div>
+          <div class="label">Google-klick</div>
+        </div>
+        <div class="stat-box">
+          <div class="value" id="sa-stat-discounts">-</div>
+          <div class="label">Rabattkoder använda</div>
+        </div>
+      </div>
+      <div id="sa-distribution"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Betyg</th>
+            <th>Kommentar</th>
+            <th>Google-klick</th>
+          </tr>
+        </thead>
+        <tbody id="sa-reviews-body"></tbody>
+      </table>
+      <div class="pagination">
+        <button id="sa-prev-page" class="secondary">Föregående</button>
+        <span class="muted" id="sa-page-label"></span>
+        <button id="sa-next-page" class="secondary">Nästa</button>
+      </div>
+
+      <h3>Redigera</h3>
       <div class="field">
         <label for="edit-name">Namn</label>
         <input type="text" id="edit-name" />

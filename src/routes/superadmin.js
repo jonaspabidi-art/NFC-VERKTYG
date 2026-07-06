@@ -5,6 +5,7 @@ const supabase = require("../lib/supabaseClient");
 const config = require("../config");
 const requireSuperAdmin = require("../middleware/requireSuperAdmin");
 const { superAdminLoginLimiter } = require("../middleware/rateLimiters");
+const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
 
 const router = express.Router();
 
@@ -92,6 +93,25 @@ router.get("/restaurants", requireSuperAdmin, async (req, res) => {
   });
 
   res.json({ restaurants: result });
+});
+
+router.get("/restaurants/:id/stats", requireSuperAdmin, async (req, res) => {
+  try {
+    res.json(await getRestaurantStats(req.params.id));
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte hämta statistik." });
+  }
+});
+
+router.get("/restaurants/:id/reviews", requireSuperAdmin, async (req, res) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(50, Number(req.query.pageSize) || 20);
+
+  try {
+    res.json(await getRestaurantReviews(req.params.id, page, pageSize));
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte hämta recensioner." });
+  }
 });
 
 router.post("/restaurants", requireSuperAdmin, async (req, res) => {

@@ -5,6 +5,7 @@ const supabase = require("../lib/supabaseClient");
 const config = require("../config");
 const requireAuth = require("../middleware/requireAuth");
 const { loginLimiter } = require("../middleware/rateLimiters");
+const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
 
 const router = express.Router();
 
@@ -97,67 +98,22 @@ router.patch("/settings", requireAuth, async (req, res) => {
 });
 
 router.get("/stats", requireAuth, async (req, res) => {
-  const { data: reviews, error: reviewsError } = await supabase
-    .from("reviews")
-    .select("rating, clicked_google")
-    .eq("restaurant_id", req.restaurantId);
-
-  if (reviewsError) {
-    return res.status(500).json({ error: "Kunde inte hämta statistik." });
+  try {
+    res.json(await getRestaurantStats(req.restaurantId));
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte hämta statistik." });
   }
-
-  const { data: discountCodes, error: discountError } = await supabase
-    .from("discount_codes")
-    .select("used")
-    .eq("restaurant_id", req.restaurantId);
-
-  if (discountError) {
-    return res.status(500).json({ error: "Kunde inte hämta rabattstatistik." });
-  }
-
-  const totalReviews = reviews.length;
-  const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  let ratingSum = 0;
-  let googleClicks = 0;
-
-  for (const review of reviews) {
-    distribution[review.rating] = (distribution[review.rating] || 0) + 1;
-    ratingSum += review.rating;
-    if (review.clicked_google) googleClicks += 1;
-  }
-
-  const averageRating = totalReviews > 0 ? ratingSum / totalReviews : 0;
-  const discountsIssued = discountCodes.length;
-  const discountsUsed = discountCodes.filter((code) => code.used).length;
-
-  res.json({
-    totalReviews,
-    averageRating: Math.round(averageRating * 100) / 100,
-    distribution,
-    googleClicks,
-    discountsIssued,
-    discountsUsed,
-  });
 });
 
 router.get("/reviews", requireAuth, async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const pageSize = Math.min(50, Number(req.query.pageSize) || 20);
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
 
-  const { data, error, count } = await supabase
-    .from("reviews")
-    .select("id, rating, comment, clicked_google, created_at", { count: "exact" })
-    .eq("restaurant_id", req.restaurantId)
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    return res.status(500).json({ error: "Kunde inte hämta recensioner." });
+  try {
+    res.json(await getRestaurantReviews(req.restaurantId, page, pageSize));
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte hämta recensioner." });
   }
-
-  res.json({ reviews: data, total: count, page, pageSize });
 });
 
 router.post("/discounts/:code/redeem", requireAuth, async (req, res) => {
