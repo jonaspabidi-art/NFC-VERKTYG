@@ -123,16 +123,16 @@
         let actionHtml = '<span class="muted">-</span>';
         if (review.discount_code) {
           const percentText = review.discount_percent
-            ? ` (${review.discount_percent}%${review.discount_bonus_applied ? ", bonus" : ""})`
+            ? ` ${review.discount_percent}%${review.discount_bonus_applied ? " +bonus" : ""}`
             : "";
-          actionHtml = `<span class="rating-badge">${escapeHtml(review.discount_code)}${percentText}</span>`;
+          actionHtml = `<span class="chip">${escapeHtml(review.discount_code)}${percentText}</span>`;
         } else if (review.contact_email || review.contact_phone) {
           actionHtml = `<button class="secondary recovery-btn">Skicka gottgörelsekod</button>`;
         }
 
         row.innerHTML = `
           <td>${date}</td>
-          <td class="rating-badge">${review.rating}</td>
+          <td>${starsHtml(review.rating)}</td>
           <td>${review.comment ? escapeHtml(review.comment) : '<span class="muted">-</span>'}</td>
           <td>${review.clicked_google ? "Ja" : "Nej"}</td>
           <td>${contactHtml}</td>
@@ -150,7 +150,7 @@
               });
               const result = await res.json();
               if (res.ok) {
-                recoveryBtn.outerHTML = `<span class="rating-badge">${escapeHtml(result.discountCode)}</span>`;
+                recoveryBtn.outerHTML = `<span class="chip">${escapeHtml(result.discountCode)}</span>`;
               } else {
                 recoveryBtn.textContent = result.error || "Kunde inte skicka koden.";
                 recoveryBtn.disabled = false;
@@ -175,6 +175,14 @@
       const div = document.createElement("div");
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function starsHtml(rating) {
+      let stars = "";
+      for (let i = 1; i <= 5; i++) {
+        stars += `<span${i <= rating ? "" : ' class="off"'}>&#9733;</span>`;
+      }
+      return `<span class="table-stars">${stars}</span>`;
     }
 
     document.getElementById("prev-page").addEventListener("click", () => {

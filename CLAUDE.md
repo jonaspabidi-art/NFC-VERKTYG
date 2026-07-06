@@ -65,14 +65,18 @@ innan de skriver publikt.
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
   `requireSuperAdmin` (kräver `role: "super_admin"`), `deviceId` (cookie),
   `rateLimiters`
-- `public/admin/`, `public/superadmin/` - vanilla JS-frontend, delat mörkt
-  guld-tema i `public/shared/theme.css` (CSS-variabler)
-- `public/review/` - gästsidan, EGEN ljus "Google review"-stil i
-  `public/review/style.css` (Roboto, vita kort) sedan 2026-07-06 (se
-  roadmap-punkt 9) - laddar fortfarande `shared/theme.css` för
-  CSS-variablerna (`--gold` m.fl.) som per-restaurang-branding styr, men
-  skriver över det mesta av utseendet lokalt. Ändra ALDRIG `shared/theme.css`
-  för att styla om gästsidan - det påverkar admin/ultra-admin också.
+- `public/shared/theme.css` - LJUST Google-inspirerat bastema (sedan
+  2026-07-06, samma dag som gästsidans redesign): vita kort, Roboto,
+  guldaccent via `--gold`/`--gold-soft` (som per-restaurang-branding
+  skriver över på gästsidan). Delas av ALLA ytor - gäst, admin och
+  ultra-admin. Tänk på att en ändring här slår igenom överallt.
+- `public/admin/`, `public/superadmin/` - vanilla JS-frontend på bastemat,
+  plus `public/admin/admin.css` (topbar, tabellstjärnor `.table-stars`,
+  rabattchip `.chip`, paginering - delas av båda adminvyerna)
+- `public/review/` - gästsidan, bastemat + egna komponenter i
+  `public/review/style.css` (stjärnor, Google-knapp, belöningsruta,
+  avatar). Designen kommer från Jonas Claude Design-fil (roadmap-punkt 9) -
+  behåll det formspråket vid ändringar.
 - `db/schema.sql` + `db/seed.sql` - körs manuellt i Supabase SQL Editor
 
 ## Viktiga beslut och varför (ändra inte utan skäl)
@@ -219,8 +223,10 @@ innan de skriver publikt.
    (2026-07-06): Jonas designade om gästflödet i Claude Design (extern
    design-verktyg) och lämnade över en `.dc.html`-canvas + skärmdumpar
    (zip-fil) som facit. Implementerat rakt av i `public/review/index.html`,
-   `style.css`, `app.js` - se arkitekturavsnittet ovan för hur gästsidans
-   ljusa tema samexisterar med adminvyernas mörka tema.
+   `style.css`, `app.js`. Senare samma dag fick admin/ultra-admin samma
+   ljusa tema (`shared/theme.css` skrevs om till ljus bas, se
+   arkitekturavsnittet) - stjärnor istället för sifferbetyg i
+   recensionstabellerna, rabattkoder som chips, Roboto överallt.
    - **Rabattkoden visas INTE längre för gästen** vid högt betyg - bara
      procentsats + "visa skärmen i kassan". Detta var en medveten ändring
      Jonas gjorde (bekräftat två gånger: "personal kmr inte använda en

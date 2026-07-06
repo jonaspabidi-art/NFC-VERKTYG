@@ -10,7 +10,7 @@ kan använda samma installation utan att se varandras data.
 
 - **Backend**: Node.js + Express (`src/`), tänkt att hostas på Railway
 - **Databas**: Supabase (Postgres), åtkomst enbart via service-role-nyckeln server-side
-- **Frontend**: statisk HTML/CSS/vanilla JS (`public/`), mörkt tema med guldaccenter, mobiloptimerad
+- **Frontend**: statisk HTML/CSS/vanilla JS (`public/`), ljust Google-inspirerat tema med guldaccenter (delad bas i `public/shared/theme.css`), mobiloptimerad
 - **NFC**: NTAG215-taggar skrivna med en URL som pekar på `/review/index.html?r=<restaurang-slug>`
 
 Se tekniska avvägningar och motiveringar i koden (kommentarer i `src/`) - de
@@ -312,8 +312,7 @@ lågbetygslarmet till ägaren, precis som en eventuell kommentar.
 
 ## Branding per restaurang (logga + accentfärg)
 
-Gästsidan kan visas i restaurangens egen stil istället för det generella
-mörka/guld-temat:
+Gästsidan kan visas i restaurangens egen stil istället för standardguldet:
 - **Logga**: en https-länk till en bild, visas ovanför restaurangnamnet.
   Restaurangen behöver hosta bilden själv (t.ex. sin egen hemsida eller ett
   bildhotell) - appen har ingen egen filuppladdning i v1.
@@ -332,10 +331,11 @@ Gästsidan (`public/review/`) fick en visuell omdesign för att kännas igen
 som ett Google-recensionsflöde direkt när gästen landar på länken - inte en
 kopia av Googles varumärke, men samma Material-inspirerade formspråk.
 
-- Ljust kort-UI (`#f5f6f7`-bakgrund, vita kort, Roboto via Google Fonts)
-  istället för det mörka temat, bara på gästsidan - admin/ultra-admin
-  behåller det mörka guld-temat oförändrat (separat stylesheet, ingen
-  delning av utseende).
+- Ljust kort-UI (`#f5f6f7`-bakgrund, vita kort, Roboto via Google Fonts).
+  Sedan samma dag delar admin/ultra-admin samma ljusa tema via
+  `public/shared/theme.css` - recensionstabellerna visar betyg som
+  stjärnor, rabattkoder som chips, och "Ta bort restaurang" är tydligt
+  rödmarkerad.
 - Solida guld-stjärnor, en vit Google-liknande delningsknapp (färgad "G"
   byggd med en CSS `conic-gradient`, ingen Google-logotypfil används av
   varumärkesskäl).

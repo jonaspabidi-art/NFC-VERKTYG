@@ -1,16 +1,23 @@
+/* Ljust, Google-inspirerat bastema - delas av gästsidan och adminvyerna.
+   Gästsidan (public/review/style.css) skriver över detaljer för sina egna
+   komponenter; adminvyerna använder basen rakt av. */
+
 :root {
-  --bg: #121212;
-  --bg-elevated: #1b1b1b;
-  --bg-card: #202020;
-  --border: #333333;
-  --text: #f2f2f2;
-  --text-muted: #a3a3a3;
+  --bg: #f5f6f7;
+  --bg-elevated: #f1f3f4;
+  --bg-card: #ffffff;
+  --border: #e8eaed;
+  --input-border: #dadce0;
+  --text: #202124;
+  --text-muted: #5f6368;
+  --text-faint: #80868b;
   --gold: #d4af37;
+  --gold-dark: #8a6d0f;
   --gold-soft: rgba(212, 175, 55, 0.15);
-  --danger: #e05656;
-  --success: #4caf78;
-  --radius: 12px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --danger: #d93025;
+  --success: #34a853;
+  --radius: 16px;
+  --font: "Roboto", system-ui, -apple-system, Arial, sans-serif;
 }
 
 * {
@@ -23,6 +30,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 .page {
@@ -39,12 +47,24 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
   padding: 24px;
   margin-bottom: 20px;
 }
 
 h1, h2, h3 {
   margin-top: 0;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.card h3 {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  font-weight: 500;
+  margin-bottom: 16px;
 }
 
 .accent {
@@ -59,12 +79,13 @@ h1, h2, h3 {
 button, .button {
   display: inline-block;
   background: var(--gold);
-  color: #1a1a1a;
+  color: #ffffff;
   border: none;
-  border-radius: var(--radius);
-  padding: 14px 20px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 999px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font);
   cursor: pointer;
   text-align: center;
   text-decoration: none;
@@ -77,23 +98,23 @@ button:disabled {
 }
 
 button.secondary {
-  background: transparent;
-  color: var(--gold);
-  border: 1px solid var(--gold);
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  border: none;
 }
 
-input, textarea {
+input, textarea, select {
   width: 100%;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: var(--bg-card);
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   color: var(--text);
-  padding: 12px;
-  font-size: 1rem;
+  padding: 12px 14px;
+  font-size: 15px;
   font-family: var(--font);
 }
 
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--gold);
 }
@@ -101,8 +122,8 @@ input:focus, textarea:focus {
 label {
   display: block;
   margin-bottom: 6px;
-  color: var(--text-muted);
-  font-size: 0.9em;
+  color: #3c4043;
+  font-size: 14px;
 }
 
 .field {
@@ -111,7 +132,7 @@ label {
 
 .error-text {
   color: var(--danger);
-  font-size: 0.9em;
+  font-size: 14px;
 }
 
 .honeypot-field {
@@ -142,25 +163,25 @@ th {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .stat-box {
   background: var(--bg-elevated);
-  border-radius: var(--radius);
-  padding: 16px;
+  border-radius: 12px;
+  padding: 16px 8px;
   text-align: center;
 }
 
 .stat-box .value {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 1.7rem;
+  font-weight: 500;
   color: var(--gold);
 }
 
 .stat-box .label {
   color: var(--text-muted);
-  font-size: 0.85em;
+  font-size: 0.82em;
   margin-top: 4px;
 }
 
@@ -172,9 +193,10 @@ th {
 }
 
 .bar-row .bar-label {
-  width: 60px;
+  width: 70px;
   color: var(--text-muted);
   font-size: 0.85em;
+  white-space: nowrap;
 }
 
 .bar-track {
@@ -188,6 +210,7 @@ th {
 .bar-fill {
   background: var(--gold);
   height: 100%;
+  border-radius: 6px;
 }
 
 .bar-row .bar-count {
@@ -195,4 +218,8 @@ th {
   text-align: right;
   color: var(--text-muted);
   font-size: 0.85em;
+}
+
+.hidden {
+  display: none !important;
 }

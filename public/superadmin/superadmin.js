@@ -85,7 +85,7 @@
           <td>${escapeHtml(restaurant.name)}</td>
           <td>${escapeHtml(restaurant.slug)}</td>
           <td>${restaurant.totalReviews}</td>
-          <td>${restaurant.averageRating.toFixed(2)}</td>
+          <td>${restaurant.averageRating.toFixed(2)} <span class="accent">&#9733;</span></td>
           <td>${restaurant.discountPercent}%</td>
           <td><button class="secondary edit-row-btn">Redigera</button></td>
         `;
@@ -98,6 +98,14 @@
       const div = document.createElement("div");
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function starsHtml(rating) {
+      let stars = "";
+      for (let i = 1; i <= 5; i++) {
+        stars += `<span${i <= rating ? "" : ' class="off"'}>&#9733;</span>`;
+      }
+      return `<span class="table-stars">${stars}</span>`;
     }
 
     function openEdit(restaurant) {
@@ -164,7 +172,7 @@
         const date = new Date(review.created_at).toLocaleDateString("sv-SE");
         row.innerHTML = `
           <td>${date}</td>
-          <td class="rating-badge">${review.rating}</td>
+          <td>${starsHtml(review.rating)}</td>
           <td>${review.comment ? escapeHtml(review.comment) : '<span class="muted">-</span>'}</td>
           <td>${review.clicked_google ? "Ja" : "Nej"}</td>
         `;
