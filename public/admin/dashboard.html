@@ -11,91 +11,121 @@
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <div class="page wide">
-    <div class="topbar">
-      <h1>Översikt <span class="accent" id="restaurant-name"></span></h1>
-      <span class="logout-link" id="logout-link">Logga ut</span>
-    </div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Admin</div>
+        <div class="sidebar-subtitle" id="restaurant-name"></div>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Stäng meny">&times;</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="overview">Översikt</button>
+        <button class="nav-item" data-view="reviews">Recensioner</button>
+        <button class="nav-item" data-view="settings">Inställningar</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="logout-link" id="logout-link">Logga ut</span>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-    <div class="card">
-      <div class="stat-grid" id="stat-grid">
-        <div class="stat-box">
-          <div class="value" id="stat-total">-</div>
-          <div class="label">Recensioner</div>
+    <main class="main-content">
+      <div class="content-inner">
+        <div class="content-header">
+          <button class="hamburger-btn" id="menu-toggle" aria-label="Öppna meny">&#9776;</button>
+          <h1 id="page-title">Översikt</h1>
         </div>
-        <div class="stat-box">
-          <div class="value" id="stat-average">-</div>
-          <div class="label">Snittbetyg</div>
-        </div>
-        <div class="stat-box">
-          <div class="value" id="stat-clicks">-</div>
-          <div class="label">Google-klick</div>
-        </div>
-        <div class="stat-box">
-          <div class="value" id="stat-discounts">-</div>
-          <div class="label">Rabattkoder utfärdade</div>
-        </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <h3>Betygsfördelning</h3>
-      <div id="distribution"></div>
-    </div>
+        <section class="view active" data-view="overview">
+          <div class="card">
+            <div class="stat-grid" id="stat-grid">
+              <div class="stat-box">
+                <div class="value" id="stat-total">-</div>
+                <div class="label">Recensioner</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="stat-average">-</div>
+                <div class="label">Snittbetyg</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="stat-clicks">-</div>
+                <div class="label">Google-klick</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="stat-discounts">-</div>
+                <div class="label">Rabattkoder utfärdade</div>
+              </div>
+            </div>
+          </div>
 
-    <div class="card">
-      <h3>Inställningar</h3>
-      <div class="field">
-        <label for="setting-percent">Rabatt (%)</label>
-        <input type="number" id="setting-percent" min="0" max="100" />
-      </div>
-      <div class="field">
-        <label for="setting-valid-days">Giltighetstid (dagar)</label>
-        <input type="number" id="setting-valid-days" min="1" max="365" />
-      </div>
-      <div class="field">
-        <label for="setting-threshold">Betyg som räknas som "högt" (1-5)</label>
-        <input type="number" id="setting-threshold" min="1" max="5" />
-      </div>
-      <div class="field">
-        <label for="setting-owner-email">Larm-e-post (skickas vid 1-2 stjärnor, valfritt)</label>
-        <input type="email" id="setting-owner-email" placeholder="agare@example.se" />
-      </div>
-      <div class="field">
-        <label for="setting-logo-url">Logga-URL (visas på gästsidan, valfritt)</label>
-        <input type="text" id="setting-logo-url" placeholder="https://..." />
-      </div>
-      <div class="field">
-        <label for="setting-accent-color">Accentfärg på gästsidan (valfritt)</label>
-        <input type="color" id="setting-accent-color" value="#d4af37" />
-      </div>
-      <button id="save-settings-btn">Spara inställningar</button>
-      <p id="settings-message" class="muted hidden"></p>
-    </div>
+          <div class="card">
+            <h3>Betygsfördelning</h3>
+            <div id="distribution"></div>
+          </div>
+        </section>
 
-    <div class="card">
-      <h3>Recensioner</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Betyg</th>
-            <th>Kommentar</th>
-            <th>Google-klick</th>
-            <th>Kontakt</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="reviews-body"></tbody>
-      </table>
-      <div class="pagination">
-        <button id="prev-page" class="secondary">Föregående</button>
-        <span class="muted" id="page-label"></span>
-        <button id="next-page" class="secondary">Nästa</button>
+        <section class="view" data-view="reviews">
+          <div class="card">
+            <h3>Recensioner</h3>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Betyg</th>
+                    <th>Kommentar</th>
+                    <th>Google-klick</th>
+                    <th>Kontakt</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="prev-page" class="secondary">Föregående</button>
+              <span class="muted" id="page-label"></span>
+              <button id="next-page" class="secondary">Nästa</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view="settings">
+          <div class="card">
+            <h3>Inställningar</h3>
+            <div class="field">
+              <label for="setting-percent">Rabatt (%)</label>
+              <input type="number" id="setting-percent" min="0" max="100" />
+            </div>
+            <div class="field">
+              <label for="setting-valid-days">Giltighetstid (dagar)</label>
+              <input type="number" id="setting-valid-days" min="1" max="365" />
+            </div>
+            <div class="field">
+              <label for="setting-threshold">Betyg som räknas som "högt" (1-5)</label>
+              <input type="number" id="setting-threshold" min="1" max="5" />
+            </div>
+            <div class="field">
+              <label for="setting-owner-email">Larm-e-post (skickas vid 1-2 stjärnor, valfritt)</label>
+              <input type="email" id="setting-owner-email" placeholder="agare@example.se" />
+            </div>
+            <div class="field">
+              <label for="setting-logo-url">Logga-URL (visas på gästsidan, valfritt)</label>
+              <input type="text" id="setting-logo-url" placeholder="https://..." />
+            </div>
+            <div class="field">
+              <label for="setting-accent-color">Accentfärg på gästsidan (valfritt)</label>
+              <input type="color" id="setting-accent-color" value="#d4af37" />
+            </div>
+            <button id="save-settings-btn">Spara inställningar</button>
+            <p id="settings-message" class="muted hidden"></p>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   </div>
 
   <script src="/admin/admin.js"></script>
+  <script src="/shared/sidebar.js"></script>
 </body>
 </html>
