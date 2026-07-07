@@ -200,8 +200,8 @@
       document.getElementById("setting-valid-days").value = settings.discountValidDays;
       document.getElementById("setting-threshold").value = settings.highRatingThreshold;
       document.getElementById("setting-owner-email").value = settings.ownerEmail || "";
-      document.getElementById("setting-logo-url").value = settings.logoUrl || "";
       document.getElementById("setting-accent-color").value = settings.accentColor || "#d4af37";
+      updateLogoPreview(settings.logoUrl);
     }
 
     document.getElementById("save-settings-btn").addEventListener("click", async () => {
@@ -217,13 +217,74 @@
             discountValidDays: Number(document.getElementById("setting-valid-days").value),
             highRatingThreshold: Number(document.getElementById("setting-threshold").value),
             ownerEmail: document.getElementById("setting-owner-email").value.trim(),
-            logoUrl: document.getElementById("setting-logo-url").value.trim(),
             accentColor: document.getElementById("setting-accent-color").value,
           }),
         });
         const data = await res.json();
 
         messageEl.textContent = res.ok ? "Inställningarna sparades." : data.error || "Kunde inte spara.";
+        messageEl.classList.remove("hidden");
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+    });
+
+    function updateLogoPreview(logoUrl) {
+      const preview = document.getElementById("setting-logo-preview");
+      const removeBtn = document.getElementById("setting-logo-remove-btn");
+      if (logoUrl) {
+        preview.src = logoUrl;
+        preview.classList.remove("hidden");
+        removeBtn.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+        preview.removeAttribute("src");
+        removeBtn.classList.add("hidden");
+      }
+    }
+
+    document.getElementById("setting-logo-upload-btn").addEventListener("click", () => {
+      document.getElementById("setting-logo-file").click();
+    });
+
+    document.getElementById("setting-logo-file").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const messageEl = document.getElementById("settings-message");
+      messageEl.classList.add("hidden");
+
+      const formData = new FormData();
+      formData.append("logo", file);
+
+      try {
+        const res = await authedFetch("/api/admin/logo", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (res.ok) {
+          updateLogoPreview(data.logoUrl);
+          messageEl.textContent = "Loggan laddades upp.";
+        } else {
+          messageEl.textContent = data.error || "Kunde inte ladda upp loggan.";
+        }
+        messageEl.classList.remove("hidden");
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+
+      e.target.value = "";
+    });
+
+    document.getElementById("setting-logo-remove-btn").addEventListener("click", async () => {
+      const messageEl = document.getElementById("settings-message");
+      messageEl.classList.add("hidden");
+
+      try {
+        await authedFetch("/api/admin/logo", { method: "DELETE" });
+        updateLogoPreview(null);
+        messageEl.textContent = "Loggan togs bort.";
         messageEl.classList.remove("hidden");
       } catch (err) {
         messageEl.textContent = "Kunde inte nå servern, försök igen.";

@@ -118,15 +118,80 @@
       document.getElementById("edit-valid-days").value = restaurant.discountValidDays;
       document.getElementById("edit-threshold").value = restaurant.highRatingThreshold;
       document.getElementById("edit-owner-email").value = restaurant.ownerEmail || "";
-      document.getElementById("edit-logo-url").value = restaurant.logoUrl || "";
       document.getElementById("edit-accent-color").value = restaurant.accentColor || "#d4af37";
       document.getElementById("edit-message").classList.add("hidden");
+      updateEditLogoPreview(restaurant.logoUrl);
       editCard.classList.remove("hidden");
       editCard.scrollIntoView({ behavior: "smooth" });
 
       loadDetailStats(restaurant.id);
       loadDetailReviews(restaurant.id, 1);
     }
+
+    function updateEditLogoPreview(logoUrl) {
+      const preview = document.getElementById("edit-logo-preview");
+      const removeBtn = document.getElementById("edit-logo-remove-btn");
+      if (logoUrl) {
+        preview.src = logoUrl;
+        preview.classList.remove("hidden");
+        removeBtn.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+        preview.removeAttribute("src");
+        removeBtn.classList.add("hidden");
+      }
+    }
+
+    document.getElementById("edit-logo-upload-btn").addEventListener("click", () => {
+      document.getElementById("edit-logo-file").click();
+    });
+
+    document.getElementById("edit-logo-file").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file || !editingId) return;
+
+      const messageEl = document.getElementById("edit-message");
+      messageEl.classList.add("hidden");
+
+      const formData = new FormData();
+      formData.append("logo", file);
+
+      try {
+        const res = await authedFetch(`/api/superadmin/restaurants/${editingId}/logo`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          updateEditLogoPreview(data.logoUrl);
+          loadRestaurants();
+        } else {
+          messageEl.textContent = data.error || "Kunde inte ladda upp loggan.";
+          messageEl.classList.remove("hidden");
+        }
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+
+      e.target.value = "";
+    });
+
+    document.getElementById("edit-logo-remove-btn").addEventListener("click", async () => {
+      if (!editingId) return;
+      const messageEl = document.getElementById("edit-message");
+      messageEl.classList.add("hidden");
+
+      try {
+        await authedFetch(`/api/superadmin/restaurants/${editingId}/logo`, { method: "DELETE" });
+        updateEditLogoPreview(null);
+        loadRestaurants();
+      } catch (err) {
+        messageEl.textContent = "Kunde inte nå servern, försök igen.";
+        messageEl.classList.remove("hidden");
+      }
+    });
 
     async function loadDetailStats(restaurantId) {
       const res = await authedFetch(`/api/superadmin/restaurants/${restaurantId}/stats`);
@@ -208,7 +273,6 @@
         discountValidDays: Number(document.getElementById("edit-valid-days").value),
         highRatingThreshold: Number(document.getElementById("edit-threshold").value),
         ownerEmail: document.getElementById("edit-owner-email").value.trim(),
-        logoUrl: document.getElementById("edit-logo-url").value.trim(),
         accentColor: document.getElementById("edit-accent-color").value,
       };
       const newPassword = document.getElementById("edit-password").value;
@@ -282,7 +346,6 @@
         discountValidDays: Number(document.getElementById("new-valid-days").value),
         highRatingThreshold: Number(document.getElementById("new-threshold").value),
         ownerEmail: document.getElementById("new-owner-email").value.trim(),
-        logoUrl: document.getElementById("new-logo-url").value.trim(),
         accentColor: document.getElementById("new-accent-color").value,
       };
 
@@ -302,7 +365,7 @@
 
         messageEl.textContent = `Restaurangen "${data.name}" skapades.`;
         messageEl.classList.remove("hidden");
-        ["new-slug", "new-name", "new-place-id", "new-password", "new-owner-email", "new-logo-url"].forEach((id) => {
+        ["new-slug", "new-name", "new-place-id", "new-password", "new-owner-email"].forEach((id) => {
           document.getElementById(id).value = "";
         });
         loadRestaurants();

@@ -110,8 +110,20 @@
               <input type="email" id="setting-owner-email" placeholder="agare@example.se" />
             </div>
             <div class="field">
-              <label for="setting-logo-url">Logga-URL (visas på gästsidan, valfritt)</label>
-              <input type="text" id="setting-logo-url" placeholder="https://..." />
+              <label>Logga (visas på gästsidan, valfritt)</label>
+              <div class="logo-field">
+                <img id="setting-logo-preview" class="logo-preview hidden" alt="Logga" />
+                <div class="logo-field-actions">
+                  <button type="button" id="setting-logo-upload-btn" class="secondary">Ladda upp logga</button>
+                  <button type="button" id="setting-logo-remove-btn" class="secondary hidden">Ta bort logga</button>
+                </div>
+                <input
+                  type="file"
+                  id="setting-logo-file"
+                  class="hidden"
+                  accept="image/png,image/jpeg,image/webp"
+                />
+              </div>
             </div>
             <div class="field">
               <label for="setting-accent-color">Accentfärg på gästsidan (valfritt)</label>

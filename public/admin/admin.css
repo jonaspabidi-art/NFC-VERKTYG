@@ -262,3 +262,30 @@ table button {
 .hidden {
   display: none !important;
 }
+
+/* Logga-uppladdning (restaurang-admin och ultra-admin) */
+.logo-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.logo-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.logo-field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.logo-field-actions button {
+  width: auto;
+}

@@ -107,8 +107,20 @@
               <input type="email" id="edit-owner-email" placeholder="agare@example.se" />
             </div>
             <div class="field">
-              <label for="edit-logo-url">Logga-URL (valfritt)</label>
-              <input type="text" id="edit-logo-url" placeholder="https://..." />
+              <label>Logga (valfritt)</label>
+              <div class="logo-field">
+                <img id="edit-logo-preview" class="logo-preview hidden" alt="Logga" />
+                <div class="logo-field-actions">
+                  <button type="button" id="edit-logo-upload-btn" class="secondary">Ladda upp logga</button>
+                  <button type="button" id="edit-logo-remove-btn" class="secondary hidden">Ta bort logga</button>
+                </div>
+                <input
+                  type="file"
+                  id="edit-logo-file"
+                  class="hidden"
+                  accept="image/png,image/jpeg,image/webp"
+                />
+              </div>
             </div>
             <div class="field">
               <label for="edit-accent-color">Accentfärg (valfritt)</label>
@@ -176,10 +188,7 @@
               <label for="new-owner-email">Larm-e-post (ägare, valfritt)</label>
               <input type="email" id="new-owner-email" placeholder="agare@example.se" />
             </div>
-            <div class="field">
-              <label for="new-logo-url">Logga-URL (valfritt)</label>
-              <input type="text" id="new-logo-url" placeholder="https://..." />
-            </div>
+            <p class="muted">Logga kan laddas upp efter att restaurangen skapats, under "Redigera".</p>
             <div class="field">
               <label for="new-accent-color">Accentfärg (valfritt)</label>
               <input type="color" id="new-accent-color" value="#d4af37" />

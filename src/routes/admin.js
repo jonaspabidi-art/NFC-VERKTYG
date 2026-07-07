@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const supabase = require("../lib/supabaseClient");
@@ -8,8 +9,16 @@ const { loginLimiter } = require("../middleware/rateLimiters");
 const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
 const { generateDiscountCode } = require("../lib/discountCode");
 const { sendRecoveryDiscountEmail } = require("../lib/emailAlerts");
+const { uploadLogo, removeLogo } = require("../lib/logoStorage");
 
 const router = express.Router();
+
+const LOGO_MIME_TO_EXT = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+const logoUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 } });
 
 router.post("/login", loginLimiter, async (req, res) => {
   const { slug, password } = req.body || {};
@@ -44,7 +53,6 @@ router.post("/login", loginLimiter, async (req, res) => {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
-const URL_PATTERN = /^https:\/\/.+/;
 
 router.get("/settings", requireAuth, async (req, res) => {
   const { data, error } = await supabase
@@ -68,8 +76,7 @@ router.get("/settings", requireAuth, async (req, res) => {
 });
 
 router.patch("/settings", requireAuth, async (req, res) => {
-  const { discountPercent, discountValidDays, highRatingThreshold, ownerEmail, logoUrl, accentColor } =
-    req.body || {};
+  const { discountPercent, discountValidDays, highRatingThreshold, ownerEmail, accentColor } = req.body || {};
 
   const percent = Number(discountPercent);
   const validDays = Number(discountValidDays);
@@ -87,9 +94,6 @@ router.patch("/settings", requireAuth, async (req, res) => {
   if (ownerEmail && !EMAIL_PATTERN.test(ownerEmail)) {
     return res.status(400).json({ error: "Ogiltig e-postadress." });
   }
-  if (logoUrl && !URL_PATTERN.test(logoUrl)) {
-    return res.status(400).json({ error: "Logga måste vara en https-länk." });
-  }
   if (accentColor && !HEX_COLOR_PATTERN.test(accentColor)) {
     return res.status(400).json({ error: "Accentfärg måste vara en hex-kod, t.ex. #d4af37." });
   }
@@ -101,7 +105,6 @@ router.patch("/settings", requireAuth, async (req, res) => {
       discount_valid_days: validDays,
       high_rating_threshold: threshold,
       owner_email: ownerEmail || null,
-      logo_url: logoUrl || null,
       accent_color: accentColor || null,
     })
     .eq("id", req.restaurantId)
@@ -120,6 +123,48 @@ router.patch("/settings", requireAuth, async (req, res) => {
     logoUrl: data.logo_url,
     accentColor: data.accent_color,
   });
+});
+
+router.post(
+  "/logo",
+  requireAuth,
+  (req, res, next) => {
+    logoUpload.single("logo")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: "Filen är för stor (max 3 MB) eller kunde inte läsas." });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "Ingen bild bifogad." });
+    }
+    const ext = LOGO_MIME_TO_EXT[req.file.mimetype];
+    if (!ext) {
+      return res.status(400).json({ error: "Endast PNG, JPEG eller WebP tillåts." });
+    }
+
+    try {
+      const logoUrl = await uploadLogo(req.restaurantId, req.file.buffer, ext, req.file.mimetype);
+      const { error } = await supabase.from("restaurants").update({ logo_url: logoUrl }).eq("id", req.restaurantId);
+      if (error) throw error;
+      res.json({ logoUrl });
+    } catch (err) {
+      res.status(500).json({ error: "Kunde inte ladda upp loggan." });
+    }
+  }
+);
+
+router.delete("/logo", requireAuth, async (req, res) => {
+  try {
+    await removeLogo(req.restaurantId);
+    const { error } = await supabase.from("restaurants").update({ logo_url: null }).eq("id", req.restaurantId);
+    if (error) throw error;
+    res.json({ status: "removed" });
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte ta bort loggan." });
+  }
 });
 
 router.get("/stats", requireAuth, async (req, res) => {

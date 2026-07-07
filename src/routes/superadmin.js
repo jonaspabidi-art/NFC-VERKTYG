@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const supabase = require("../lib/supabaseClient");
@@ -7,8 +8,16 @@ const requireSuperAdmin = require("../middleware/requireSuperAdmin");
 const { superAdminLoginLimiter } = require("../middleware/rateLimiters");
 const { getRestaurantStats, getRestaurantReviews } = require("../lib/restaurantStats");
 const { sendMonthlyReport } = require("../lib/emailAlerts");
+const { uploadLogo, removeLogo } = require("../lib/logoStorage");
 
 const router = express.Router();
+
+const LOGO_MIME_TO_EXT = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
+const logoUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 } });
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -160,6 +169,67 @@ router.get("/restaurants/:id/reviews", requireSuperAdmin, async (req, res) => {
     res.json(await getRestaurantReviews(req.params.id, page, pageSize));
   } catch (err) {
     res.status(500).json({ error: "Kunde inte hämta recensioner." });
+  }
+});
+
+router.post(
+  "/restaurants/:id/logo",
+  requireSuperAdmin,
+  (req, res, next) => {
+    logoUpload.single("logo")(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ error: "Filen är för stor (max 3 MB) eller kunde inte läsas." });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    const { id } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: "Ingen bild bifogad." });
+    }
+    const ext = LOGO_MIME_TO_EXT[req.file.mimetype];
+    if (!ext) {
+      return res.status(400).json({ error: "Endast PNG, JPEG eller WebP tillåts." });
+    }
+
+    try {
+      const logoUrl = await uploadLogo(id, req.file.buffer, ext, req.file.mimetype);
+      const { data, error } = await supabase
+        .from("restaurants")
+        .update({ logo_url: logoUrl })
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        return res.status(404).json({ error: "Restaurangen hittades inte." });
+      }
+      res.json({ logoUrl });
+    } catch (err) {
+      res.status(500).json({ error: "Kunde inte ladda upp loggan." });
+    }
+  }
+);
+
+router.delete("/restaurants/:id/logo", requireSuperAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await removeLogo(id);
+    const { data, error } = await supabase
+      .from("restaurants")
+      .update({ logo_url: null })
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: "Restaurangen hittades inte." });
+    }
+    res.json({ status: "removed" });
+  } catch (err) {
+    res.status(500).json({ error: "Kunde inte ta bort loggan." });
   }
 });
 
