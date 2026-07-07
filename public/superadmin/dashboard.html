@@ -11,159 +11,188 @@
   <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-  <div class="page wide">
-    <div class="topbar">
-      <h1>Ultra-admin <span class="accent">Restauranger</span></h1>
-      <span class="logout-link" id="logout-link">Logga ut</span>
-    </div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Ultra-admin</div>
+        <div class="sidebar-subtitle">Restauranger</div>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Stäng meny">&times;</button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="restaurants">Alla restauranger</button>
+        <button class="nav-item" data-view="create">Skapa restaurang</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="logout-link" id="logout-link">Logga ut</span>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
-    <div class="card">
-      <h3>Skapa ny restaurang</h3>
-      <div class="field">
-        <label for="new-slug">Slug (används i NFC-URL:en)</label>
-        <input type="text" id="new-slug" placeholder="t.ex. pizzeria-bella" />
-      </div>
-      <div class="field">
-        <label for="new-name">Namn</label>
-        <input type="text" id="new-name" placeholder="t.ex. Pizzeria Bella" />
-      </div>
-      <div class="field">
-        <label for="new-place-id">Google Place ID</label>
-        <input type="text" id="new-place-id" placeholder="ChIJ..." />
-      </div>
-      <div class="field">
-        <label for="new-password">Lösenord (till restaurangens adminvy)</label>
-        <input type="text" id="new-password" placeholder="minst 6 tecken" />
-      </div>
-      <div class="field">
-        <label for="new-percent">Rabatt (%)</label>
-        <input type="number" id="new-percent" value="10" min="0" max="100" />
-      </div>
-      <div class="field">
-        <label for="new-valid-days">Giltighetstid (dagar)</label>
-        <input type="number" id="new-valid-days" value="30" min="1" max="365" />
-      </div>
-      <div class="field">
-        <label for="new-threshold">Betyg som räknas som "högt" (1-5)</label>
-        <input type="number" id="new-threshold" value="4" min="1" max="5" />
-      </div>
-      <div class="field">
-        <label for="new-owner-email">Larm-e-post (ägare, valfritt)</label>
-        <input type="email" id="new-owner-email" placeholder="agare@example.se" />
-      </div>
-      <div class="field">
-        <label for="new-logo-url">Logga-URL (valfritt)</label>
-        <input type="text" id="new-logo-url" placeholder="https://..." />
-      </div>
-      <div class="field">
-        <label for="new-accent-color">Accentfärg (valfritt)</label>
-        <input type="color" id="new-accent-color" value="#d4af37" />
-      </div>
-      <button id="create-btn">Skapa restaurang</button>
-      <p id="create-message" class="muted hidden"></p>
-    </div>
-
-    <div class="card hidden" id="edit-card">
-      <h3>Statistik: <span id="edit-name-label"></span></h3>
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="value" id="sa-stat-total">-</div>
-          <div class="label">Recensioner</div>
+    <main class="main-content">
+      <div class="content-inner">
+        <div class="content-header">
+          <button class="hamburger-btn" id="menu-toggle" aria-label="Öppna meny">&#9776;</button>
+          <h1 id="page-title">Alla restauranger</h1>
         </div>
-        <div class="stat-box">
-          <div class="value" id="sa-stat-average">-</div>
-          <div class="label">Snittbetyg</div>
-        </div>
-        <div class="stat-box">
-          <div class="value" id="sa-stat-clicks">-</div>
-          <div class="label">Google-klick</div>
-        </div>
-        <div class="stat-box">
-          <div class="value" id="sa-stat-discounts">-</div>
-          <div class="label">Rabattkoder utfärdade</div>
-        </div>
-      </div>
-      <div id="sa-distribution"></div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Betyg</th>
-            <th>Kommentar</th>
-            <th>Google-klick</th>
-          </tr>
-        </thead>
-        <tbody id="sa-reviews-body"></tbody>
-      </table>
-      <div class="pagination">
-        <button id="sa-prev-page" class="secondary">Föregående</button>
-        <span class="muted" id="sa-page-label"></span>
-        <button id="sa-next-page" class="secondary">Nästa</button>
-      </div>
+        <section class="view active" data-view="restaurants">
+          <div class="card hidden" id="edit-card">
+            <h3>Statistik: <span id="edit-name-label"></span></h3>
+            <div class="stat-grid">
+              <div class="stat-box">
+                <div class="value" id="sa-stat-total">-</div>
+                <div class="label">Recensioner</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="sa-stat-average">-</div>
+                <div class="label">Snittbetyg</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="sa-stat-clicks">-</div>
+                <div class="label">Google-klick</div>
+              </div>
+              <div class="stat-box">
+                <div class="value" id="sa-stat-discounts">-</div>
+                <div class="label">Rabattkoder utfärdade</div>
+              </div>
+            </div>
+            <div id="sa-distribution"></div>
 
-      <h3>Redigera</h3>
-      <div class="field">
-        <label for="edit-name">Namn</label>
-        <input type="text" id="edit-name" />
-      </div>
-      <div class="field">
-        <label for="edit-place-id">Google Place ID</label>
-        <input type="text" id="edit-place-id" />
-      </div>
-      <div class="field">
-        <label for="edit-password">Nytt lösenord (lämna tomt för att behålla nuvarande)</label>
-        <input type="text" id="edit-password" placeholder="minst 6 tecken" />
-      </div>
-      <div class="field">
-        <label for="edit-percent">Rabatt (%)</label>
-        <input type="number" id="edit-percent" min="0" max="100" />
-      </div>
-      <div class="field">
-        <label for="edit-valid-days">Giltighetstid (dagar)</label>
-        <input type="number" id="edit-valid-days" min="1" max="365" />
-      </div>
-      <div class="field">
-        <label for="edit-threshold">Betyg som räknas som "högt" (1-5)</label>
-        <input type="number" id="edit-threshold" min="1" max="5" />
-      </div>
-      <div class="field">
-        <label for="edit-owner-email">Larm-e-post (ägare, valfritt)</label>
-        <input type="email" id="edit-owner-email" placeholder="agare@example.se" />
-      </div>
-      <div class="field">
-        <label for="edit-logo-url">Logga-URL (valfritt)</label>
-        <input type="text" id="edit-logo-url" placeholder="https://..." />
-      </div>
-      <div class="field">
-        <label for="edit-accent-color">Accentfärg (valfritt)</label>
-        <input type="color" id="edit-accent-color" value="#d4af37" />
-      </div>
-      <button id="save-edit-btn">Spara ändringar</button>
-      <button id="cancel-edit-btn" class="secondary">Avbryt</button>
-      <button id="send-report-btn" class="secondary">Skicka rapport nu</button>
-      <button id="delete-btn" class="secondary">Ta bort restaurang</button>
-      <p id="edit-message" class="muted hidden"></p>
-    </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Betyg</th>
+                    <th>Kommentar</th>
+                    <th>Google-klick</th>
+                  </tr>
+                </thead>
+                <tbody id="sa-reviews-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="sa-prev-page" class="secondary">Föregående</button>
+              <span class="muted" id="sa-page-label"></span>
+              <button id="sa-next-page" class="secondary">Nästa</button>
+            </div>
 
-    <div class="card">
-      <h3>Alla restauranger</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Namn</th>
-            <th>Slug</th>
-            <th>Recensioner</th>
-            <th>Snitt</th>
-            <th>Rabatt</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="restaurants-body"></tbody>
-      </table>
-    </div>
+            <h3>Redigera</h3>
+            <div class="field">
+              <label for="edit-name">Namn</label>
+              <input type="text" id="edit-name" />
+            </div>
+            <div class="field">
+              <label for="edit-place-id">Google Place ID</label>
+              <input type="text" id="edit-place-id" />
+            </div>
+            <div class="field">
+              <label for="edit-password">Nytt lösenord (lämna tomt för att behålla nuvarande)</label>
+              <input type="text" id="edit-password" placeholder="minst 6 tecken" />
+            </div>
+            <div class="field">
+              <label for="edit-percent">Rabatt (%)</label>
+              <input type="number" id="edit-percent" min="0" max="100" />
+            </div>
+            <div class="field">
+              <label for="edit-valid-days">Giltighetstid (dagar)</label>
+              <input type="number" id="edit-valid-days" min="1" max="365" />
+            </div>
+            <div class="field">
+              <label for="edit-threshold">Betyg som räknas som "högt" (1-5)</label>
+              <input type="number" id="edit-threshold" min="1" max="5" />
+            </div>
+            <div class="field">
+              <label for="edit-owner-email">Larm-e-post (ägare, valfritt)</label>
+              <input type="email" id="edit-owner-email" placeholder="agare@example.se" />
+            </div>
+            <div class="field">
+              <label for="edit-logo-url">Logga-URL (valfritt)</label>
+              <input type="text" id="edit-logo-url" placeholder="https://..." />
+            </div>
+            <div class="field">
+              <label for="edit-accent-color">Accentfärg (valfritt)</label>
+              <input type="color" id="edit-accent-color" value="#d4af37" />
+            </div>
+            <button id="save-edit-btn">Spara ändringar</button>
+            <button id="cancel-edit-btn" class="secondary">Avbryt</button>
+            <button id="send-report-btn" class="secondary">Skicka rapport nu</button>
+            <button id="delete-btn" class="secondary">Ta bort restaurang</button>
+            <p id="edit-message" class="muted hidden"></p>
+          </div>
+
+          <div class="card">
+            <h3>Alla restauranger</h3>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Namn</th>
+                    <th>Slug</th>
+                    <th>Recensioner</th>
+                    <th>Snitt</th>
+                    <th>Rabatt</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="restaurants-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view="create">
+          <div class="card">
+            <h3>Skapa ny restaurang</h3>
+            <div class="field">
+              <label for="new-slug">Slug (används i NFC-URL:en)</label>
+              <input type="text" id="new-slug" placeholder="t.ex. pizzeria-bella" />
+            </div>
+            <div class="field">
+              <label for="new-name">Namn</label>
+              <input type="text" id="new-name" placeholder="t.ex. Pizzeria Bella" />
+            </div>
+            <div class="field">
+              <label for="new-place-id">Google Place ID</label>
+              <input type="text" id="new-place-id" placeholder="ChIJ..." />
+            </div>
+            <div class="field">
+              <label for="new-password">Lösenord (till restaurangens adminvy)</label>
+              <input type="text" id="new-password" placeholder="minst 6 tecken" />
+            </div>
+            <div class="field">
+              <label for="new-percent">Rabatt (%)</label>
+              <input type="number" id="new-percent" value="10" min="0" max="100" />
+            </div>
+            <div class="field">
+              <label for="new-valid-days">Giltighetstid (dagar)</label>
+              <input type="number" id="new-valid-days" value="30" min="1" max="365" />
+            </div>
+            <div class="field">
+              <label for="new-threshold">Betyg som räknas som "högt" (1-5)</label>
+              <input type="number" id="new-threshold" value="4" min="1" max="5" />
+            </div>
+            <div class="field">
+              <label for="new-owner-email">Larm-e-post (ägare, valfritt)</label>
+              <input type="email" id="new-owner-email" placeholder="agare@example.se" />
+            </div>
+            <div class="field">
+              <label for="new-logo-url">Logga-URL (valfritt)</label>
+              <input type="text" id="new-logo-url" placeholder="https://..." />
+            </div>
+            <div class="field">
+              <label for="new-accent-color">Accentfärg (valfritt)</label>
+              <input type="color" id="new-accent-color" value="#d4af37" />
+            </div>
+            <button id="create-btn">Skapa restaurang</button>
+            <p id="create-message" class="muted hidden"></p>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
 
   <script src="/superadmin/superadmin.js"></script>
+  <script src="/shared/sidebar.js"></script>
 </body>
 </html>
