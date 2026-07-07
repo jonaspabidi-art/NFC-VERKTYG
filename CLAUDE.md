@@ -62,6 +62,9 @@ innan de skriver publikt.
   `lang`-parameter som frontend skickar med. No-op om `ELKS_*` saknas.
 - `src/lib/monthlyReportScheduler.js` - periodisk koll (se beslut 9 nedan),
   startas från `src/index.js` vid serverstart
+- `src/lib/logoStorage.js` - uppladdning/borttagning av restauranglogga mot
+  Supabase Storage-bucketen `logos` (skapas automatiskt om den saknas), se
+  roadmap-punkt 5
 - `src/middleware/` - `requireAuth` (restaurang-JWT, kräver `restaurantId` i payload),
   `requireSuperAdmin` (kräver `role: "super_admin"`), `deviceId` (cookie),
   `rateLimiters`
@@ -191,6 +194,21 @@ innan de skriver publikt.
    ALDRIG admin-/ultra-admin-temat. Trasig loggo-URL döljs tyst (ingen
    trasig bild-ikon). `logo_url`/`accent_color`-kolumnerna kräver samma typ
    av separat migrering som tidigare kolumner.
+   - **Uppdaterad 2026-07-07**: logga sätts inte längre genom att klistra in
+     en URL - både restaurangens egen inställningsvy och ultra-admins
+     redigeringsvy har nu en "Ladda upp logga"-knapp (filuppladdning,
+     PNG/JPEG/WebP, max 3 MB) istället för textfältet. Filen laddas upp till
+     en Supabase Storage-bucket (`logos`, publik, skapas automatiskt av
+     `src/lib/logoStorage.js` vid första uppladdningen - ingen manuell
+     bucket-skapelse behövs), sökväg `<restaurantId>/logo.<ext>` med
+     `upsert: true` (skriver alltid över, ingen historik). Resultat-URL:en
+     (med `?v=`-cache-bust) skrivs till samma `logo_url`-kolumn som förut,
+     så gästsidans `applyBranding()` är helt opåverkad. Nya endpoints
+     `POST`/`DELETE /api/admin/logo` (restaurang) och
+     `POST`/`DELETE /api/superadmin/restaurants/:id/logo` (ultra-admin,
+     bara i redigeringsvyn - "Skapa ny restaurang" saknar loggafält eftersom
+     ett restaurant-ID krävs innan en fil kan laddas upp). Ingen ny
+     databas-migrering - samma `logo_url`-kolumn, bara en ny källa för den.
 6. ~~**Google-bonusrabatt + SMS-påminnelse**~~ - KLART (2026-07-06): efter
    högt betyg kan gästen lämna mobilnummer för att låsa upp
    `GOOGLE_BONUS_PERCENT` (10 procentenheter, konstant i
